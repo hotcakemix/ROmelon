@@ -55,6 +55,7 @@
 #include "achieve.h"
 #include "elem.h"
 
+
 #define MOB_LAZYMOVEPERC     50		// 手抜きモードMOBの移動確率（千分率）
 #define MOB_LAZYWARPPERC     20		// 手抜きモードMOBのワープ確率（千分率）
 #define MOB_LAZYSKILLUSEPERC  2		// 手抜きモードMOBのスキル使用確率（千分率）
@@ -2046,6 +2047,13 @@ int mob_damage(struct block_list *src,struct mob_data *md,int damage,int type)
 		return 0;
 	}
 
+	//れもん追加ダメージスケール
+	struct mobdb_data* mob_info = mobdb_search(md->class_);
+	if (mob_info && mob_info->dscale > 0) {
+		damage = (damage + (mob_info->dscale / 2)) / mob_info->dscale;
+	}
+	
+
 	if(md->hp <= 0) {
 		if(md->bl.prev != NULL) {
 			mobskill_use(md,tick,-1);	// 死亡時スキル
@@ -2491,10 +2499,35 @@ static int mob_dead(struct block_list *src,struct mob_data *md,int type,unsigned
 				if(itemdb_isequip3(itemid) && itemdb_randopt_item(itemid)) {
 					ditem->randopt = r;
 				}
-
 				add_timer2(tick+500+i,mob_delay_item_drop,0,ditem);
 			}
 		}
+		//れもん追加オリジナル要素lv差による追加ドロップ
+		struct mobdb_data *mdd = mobdb_search(md->class_);
+		if (sd && mdd && abs(sd->status.base_level - mdd->lv) <= 30) {
+			int drop_chance = 500; // 基本確率（500 = 5.0%）
+			struct delay_item_drop* ditem;
+
+			// レベルが100以上ならドロップ確率を+50%
+			if (sd->status.base_level >= 100) drop_chance = (drop_chance * 150) / 100;
+			// レベル200以上ならさらに+50%
+			if (sd->status.base_level >= 200) drop_chance = (drop_chance * 150) / 100;
+
+			if (drop_chance > atn_rand() % 10000) {
+				ditem = (struct delay_item_drop*)aCalloc(1, sizeof(struct delay_item_drop));
+				ditem->nameid = 1000500;
+				ditem->amount = 1;
+				ditem->m = md->bl.m;
+				ditem->x = md->bl.x;
+				ditem->y = md->bl.y;
+				ditem->first_id = (mvp[0].bl) ? mvp[0].bl->id : 0;
+				ditem->second_id = (mvp[1].bl) ? mvp[1].bl->id : 0;
+				ditem->third_id = (mvp[2].bl) ? mvp[2].bl->id : 0;
+				ditem->randopt = 0;
+				add_timer2(tick + 520 + i, mob_delay_item_drop, 0, ditem);
+			}
+		}
+		//れもん追加ここまで
 		if(sd) {
 			for(i=0; i<sd->monster_drop_item_count; i++) {
 				struct delay_item_drop *ditem;
@@ -4487,6 +4520,59 @@ static int mob_readdb(void)
 	return 0;
 }
 
+//れもん追加　ダメージスケール
+static int mob_damage_scale(void)
+{
+	FILE* fp;
+	char line[1024];
+	int  ln = 0;
+	int	 class_,scale_,i;
+	char *str[3], * p;
+	struct mobdb_data *id;
+	const char* filename = "db/mob_damage_scale.txt";
+
+	if ((fp = fopen(filename, "r")) == NULL) {
+		printf("mob_damage_scale: open [%s] failed !\n", filename);
+		return -1;
+	}
+
+	while (fgets(line, 1024, fp)) {
+		if (line[0] == '\0' || line[0] == '\r' || line[0] == '\n')
+			continue;
+		if (line[0] == '/' && line[1] == '/')
+			continue;
+		memset(str, 0, sizeof(str));
+
+		for (i = 0, p = line; i < 3 && p; i++) {
+			str[i] = p;
+			p = strchr(p, ',');  // `,` の位置を探す
+			if (p) *p++ = 0;  // `,` を `\0` に変えて次の文字へ
+		}
+		if (str[0] == NULL || str[2] == NULL)
+			continue;
+
+		class_ = atoi(str[0]);
+		if (!mobdb_exists(class_))	// 値が異常なら処理しない。
+			continue;
+
+		scale_ = atoi(str[2]);
+		if (scale_ > 1000) {
+			scale_ = 1000;
+		}
+
+		id = mobdb_search(class_);
+
+		if (id) {
+			id->dscale = scale_;
+			ln++;
+		}
+	}
+	fclose(fp);
+	printf("read %s done (count=%d)\n", filename, ln);
+
+	return 0;
+}
+
 /*==========================================
  * MOB表示グラフィック変更データ読み込み
  *------------------------------------------
@@ -5076,6 +5162,7 @@ void mob_reload(void)
 	mob_readtalkdb();
 	mob_readskilldb();
 	mob_readmobmodedb();
+	mob_damage_scale();		//れもん追加 ダメージスケール
 }
 
 /*==========================================
@@ -5094,6 +5181,7 @@ int do_init_mob(void)
 	mob_readtalkdb();
 	mob_readskilldb();
 	mob_readmobmodedb();
+	mob_damage_scale();		//れもん追加 ダメージスケール
 
 	add_timer_func_list(mob_delayspawn);
 	add_timer_func_list(mob_delay_item_drop);

@@ -1,0 +1,229 @@
+//***********************************************
+//  レンタルNPC
+//  2011.04  はじめてのAuriga - kiy
+//***********************************************
+
+payon.gat,148,246,5	script	レンタル屋#1	721,{
+	cutin "kafra_07",2;
+	mes "[トモコ]";
+	mes "ようこそいらっしゃいました。";
+	mes " ";
+	mes "ここでは、相棒を紹介しています。";
+	mes "ご希望のパートナーを選んで下さい。";
+	next;
+
+	switch(select("カート","ファルコン","ペコペコ・グリフォン",
+		"ドラゴン","ウォーグ","魔導ギア","私は無敵のソロ軍団")) {
+
+	//カート
+	case 1:
+		if(checkcart()){
+			mes "[トモコ]";
+			mes "既にカートをお連れのようです。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(getskilllv(39)==0){
+			mes "[トモコ]";
+			mes "カートを引くには、";
+			mes "^9900ffスキル「プッシュカート」^000000";
+			mes "が必要です。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		mes "[トモコ]";
+		mes "はい、どうぞ～！";
+		mes "名前をつけて可愛がってあげてね。";
+		setcart;
+		close2;
+		cutin "kafra_07",255;
+		end;
+
+	//ファルコン
+	case 2:
+		if(checkfalcon()){
+			mes "[トモコ]";
+			mes "既にファルコンをお連れのようです。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(getskilllv(127)==0){
+			mes "[トモコ]";
+			mes "ファルコンを手なずけるには、";
+			mes "^9900ffスキル「ファルコンマスタリー」^000000";
+			mes "が必要です。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		mes "[トモコ]";
+		mes "はい、どうぞ～！";
+		mes "名前をつけて可愛がってあげてね。";
+		setfalcon;
+		close2;
+		cutin "kafra_07",255;
+		end;
+
+	//ペコペコ・グリフォン
+	case 3:
+		if(getbaseclass(Class,3) == CLASS_RK){
+			mes "[トモコ]";
+			mes "ルーンナイト、ドラゴンナイトは";
+			mes "ペコペコに乗ることができません。";
+			mes "代わりにドラゴンに乗ることが";
+			mes "できますので、ご利用下さい。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(checkriding()){
+			mes "[トモコ]";
+			if(getbaseclass(Class,3) == CLASS_LG){
+				mes "既にグリフォンをお連れのようです。";
+			} else {
+				mes "既にペコペコをお連れのようです。";
+			}
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(getskilllv(63)==0){
+			mes "[トモコ]";
+			if(getbaseclass(Class,3) == CLASS_LG){
+				mes "グリフォンに乗るためには、";
+			} else {
+				mes "ペコペコに乗るためには、";
+			}
+			mes "^9900ffスキル「ライディング」^000000";
+			mes "が必要です。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		mes "[トモコ]";
+		mes "はい、どうぞ～！";
+		mes "名前をつけて可愛がってあげてね。";
+		setriding;
+		close2;
+		cutin "kafra_07",255;
+		end;
+
+	//ドラゴン
+	case 4:
+		if(checkdragon()){
+			mes "[トモコ]";
+			mes "既にドラゴンをお連れのようです。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(getskilllv(2007)==0){
+			mes "[トモコ]";
+			mes "ドラゴンを従えるには、";
+			mes "^9900ffスキル「ドラゴントレーニング」^000000";
+			mes "が必要です。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		mes "[トモコ]";
+		mes "はい、どうぞ～！";
+		mes "名前をつけて可愛がってあげてね。";
+		setdragon;
+		close2;
+		cutin "kafra_07",255;
+		end;
+
+	//ウォーグ
+	case 5:
+		if(checkwolf()){
+			mes "[トモコ]";
+			mes "既にウォーグをお連れのようです。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(getskilllv(2240)==0){
+			mes "[トモコ]";
+			mes "ウォーグと駆け抜けるためには、";
+			mes "^9900ffスキル「ウォーグマスタリー」^000000";
+			mes "が必要です。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(countitem(6124)==0){
+			mes "[トモコ]";
+			mes "はい、どうぞ～！";
+			mes "この「狼の笛」を吹けば";
+			mes "ウォーグが召喚できます。";
+			mes "名前をつけて可愛がってあげてね。";
+			getitem 6124,1;
+		}
+		else {
+			mes "[トモコ]";
+			mes "お持ちの「狼の笛」を吹けば";
+			mes "ウォーグが召喚できます。";
+			mes "^9900ffスキル「ウォーグマスタリー」^000000を";
+			mes "発動する時です。";
+		}
+		close2;
+		cutin "kafra_07",255;
+		end;
+
+	//魔導ギア
+	case 6:
+		if(checkgear()){
+			mes "[トモコ]";
+			mes "既に魔導ギアをお連れのようです。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		if(getskilllv(2255)==0){
+			mes "[トモコ]";
+			mes "魔導ギアを操縦するためには、";
+			mes "^9900ffスキル「魔導ギアライセンス」^000000";
+			mes "が必要です。";
+			close2;
+			cutin "kafra_07",255;
+			end;
+		}
+
+		mes "[トモコ]";
+		mes "はい、どうぞ～！";
+		mes "名前をつけて可愛がってあげてね。";
+		setgear;
+		close2;
+		cutin "kafra_07",255;
+		end;
+
+	//ソロ軍団
+	case 7:
+		mes "[トモコ]";
+		mes "わかりました。";
+		mes "相棒が必要になりましたら、";
+		mes "またおこし下さい。";
+		close2;
+		cutin "kafra_07",255;
+		end;
+	}
+
+}
+izlude.gat,121,124,5	duplicate(レンタル屋#1)	レンタル屋	721;
+prontera.gat,149,194,5	duplicate(レンタル屋#1)	レンタル屋	721;

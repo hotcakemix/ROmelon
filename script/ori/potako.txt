@@ -1,0 +1,190 @@
+//転送
+// script by Lucy 2007/04/08
+//
+-	script	既存MAP転送#1	725,{
+
+	cutin "job_black_hucke01",2;
+
+	mes "[ヒュッケ]";
+	mes "こんにちは。";
+	mes "転送サービスです。";
+	mes "転送して差し上げましょうか？";
+	next;
+	if(select("お願いします。","けっこうです。") == 2) {
+		//終了
+		goto LEnd1;
+	}
+
+	//csvファイルの指定
+	set 'file_pota$,"script/ori/db/db_potamap.txt";
+	set 'file_area$,"script/ori/db/db_area.txt";
+
+	//
+	// 履歴の設定
+	//
+	// 履歴を保持する配列
+	// '@hystory[<num>]
+	// <num>	マップID
+	//
+	
+	//最大履歴件数を設定
+	//
+	//	件数を増やす場合は、'hys_sizeを増やすと同時に
+	//	set '@hystory[<num>],#hystory<num>;を一行ずつ追加してください
+	//
+	set 'hys_size,5;
+	set '@hystory[0],#hystory0;
+	set '@hystory[1],#hystory1;
+	set '@hystory[2],#hystory2;
+	set '@hystory[3],#hystory3;
+	set '@hystory[4],#hystory4;
+						
+	// 地域ファイルを読み込む
+	//	'area$[<element>][<num>]
+	//	<element>	0: 	エリアID(主キー)
+	//				1:	エリア名
+	//	<num>		読み込み番号
+	for( set '@i,0;	'@i<csvgetrows( 'file_area$);	set '@i,'@i+1){
+		set 'area$[0]['@i],csvread('file_area$, '@i, 0);
+		set 'area$[1]['@i],csvread('file_area$, '@i, 1);
+	}
+
+	//
+	//次の選択肢で地域を選ぶのか、履歴から選ぶのかを決める
+	//どちらの場合でも該当したマップを'@box$[][]に入れる
+	//
+	// '@box$[<element>][<num>]
+	// <num>		番号
+	// <element> 	'@box$[0][<num>] : マップID(@des&[]参照)
+	//		   		'@box$[1][<num>] : 表示マップ名が入る
+	//	'@nitems 該当したマップ数を保持
+	//
+
+	//地域を選択した時
+	set @menu,select(printarray('area$[1][0])) - 1;
+	if(@menu != 0){
+		//選択した地域番号
+		set '@area_num$,'area$[0][@menu];
+		set '@nitems,0;
+		
+		//全てのマップから走査
+		for(set '@i,0; '@i < csvgetrows( 'file_pota$); set '@i,'@i+1){
+			//地域番号に該当するマップを探してboxに入れる
+			if(	csvread('file_pota$,'@i,1) == '@area_num$){
+				setarray '@box$[0]['@nitems],csvread('file_pota$,'@i,0);
+				setarray '@box$[1]['@nitems],csvread('file_pota$,'@i,2);
+				
+				set '@nitems,'@nitems+1;
+			}
+		}
+		set @menu,0;
+
+	//履歴から選ぶを選択した時
+	}else{
+
+		set '@nitems,0;
+		//後ろから順に走査
+		for(set '@i,getarraysize('@hystory)-1 ; 0 <= '@i; set '@i,'@i-1){
+			//一応エラーチェック 該当すれば'@box$[][]に値を入れる
+			if( 0 <= '@hystory['@i] ){
+				//マップIDを入れる
+				setarray '@box$[0]['@nitems],'@hystory['@i];
+				
+				//
+				//マップ名を入れる
+				//
+				//csvファイルから指定したIDを持つ行を検索
+				set '@Line,csvfind('file_pota$,0,'@hystory['@i]);
+				//該当する行の持つマップ名を入れる
+				setarray '@box$[1]['@nitems],csvread('file_pota$,'@Line,2);
+				
+				set '@nitems,'@nitems+1;
+			}
+		}
+		set @menu,0;
+
+	}
+	//↑履歴から選ぶ終わり
+
+	//
+	//	マップの選択
+	//	'@box$[][]から、マップを選択
+	//	選択した値は自動的に@menuに入る
+	//
+	set @menu,select(printarray('@box$[1][0])) - 1; //選択肢の数指定は不要のため削除
+	//一応エラーチェック
+	if(0 <= @menu ){
+
+		//
+		//履歴に加える操作
+		//
+
+		//
+		//履歴配列が長すぎないかチェック
+		//
+		if( 'hys_size <= getarraysize('@hystory) ){
+			//後ろのはみ出した部分を削除
+			deletearray '@hystory['hys_size],getarraysize('@hystory)-'hys_size;
+		}
+
+		//
+		//履歴に追加するマップが重複した場合
+		//該当箇所を削除
+		//
+		for( set '@i,getarraysize('@hystory)-1; 0 <= '@i; set '@i,'@i-1 ){
+			//数値と文字列を比較演算できないので、
+			//キャストっぽいのをやっとく
+			set '@conv,'@box$[0][@menu];
+			if('@hystory['@i] == '@conv){
+				deletearray '@hystory['@i],1;
+				set '@i,'@i-1;
+			}
+		}
+		
+		//
+		//該当件数がいっぱいになった時
+		//一番古い履歴を削除
+		//
+		if( 'hys_size <= getarraysize('@hystory) ){
+			deletearray '@hystory[0],1;
+		}
+
+		//
+		//履歴に追加
+		//
+		setarray '@hystory[getarraysize('@hystory)],'@box$[0][@menu];
+
+		//永続的変数に登録
+		set #hystory0,'@hystory[0];
+		set #hystory1,'@hystory[1];
+		set #hystory2,'@hystory[2];
+		set #hystory3,'@hystory[3];
+		set #hystory4,'@hystory[4];
+		
+		//
+		//指定したマップにワープ
+		//
+		
+		//指定された行を探す
+		set '@Line,csvfind('file_pota$,0,'@box$[0][@menu]);
+		//その行のワープ先データを使う
+		warp csvread('file_pota$,'@Line,3),csvread('file_pota$,'@Line,4),csvread('file_pota$,'@Line,5);
+		
+	}
+
+	set @menu,0;
+	goto LEnd2;
+
+LEnd1:
+	mes "[ヒュッケ]";
+	mes "いつでもご利用してくださいね。";
+LEnd2:
+	cutin "job_black_hucke01",255;
+	close;
+
+}
+
+
+
+
+prontera.gat,158,193,5	duplicate(既存MAP転送#1)	転送NPC	725;

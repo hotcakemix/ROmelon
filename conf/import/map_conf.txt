@@ -1,0 +1,78 @@
+npc: script/ori/kakuninn.txt
+npc: script/ori/sl.txt
+npc: script/ori/tensyoku.txt
+npc: script/ori/test.txt
+npc: script/ori/potako.txt
+npc: script/ori/rentar.txt
+npc: script/ori/questskill.txt
+
+
+
+//ヘビ？
+map: 1@jorchs.gat
+map: 1@jorlab.gat
+
+//フィールドMAPとして
+map: 1@mjo1.gat
+map: 1@mjo2.gat
+
+
+
+//イズガルドMAP
+
+map: 1@slug.gat
+
+
+
+map: jro22ani1.gat
+
+//神殿？MAP　使いたい
+map: 1@adv.gat
+map: 1@pda.gat
+map: jp_ev_map40.gat
+
+
+
+//天空神殿？　使いたい
+map: 1@colo.gat
+map: 1@eom.gat
+map: rwc01.gat
+
+//海底？　使いたい
+map: 1@drdo.gat
+
+
+//火山？　使いたい
+map: 1@f_lake.gat
+map: oz_dun02.gat
+
+
+//ポリンワールド？　使いたい
+map: 1@vrpo.gat
+
+
+//闘技場？　使いたい
+map: bat_c01.gat
+
+
+//なんかにつかうかも？
+map: ecl_in01.gat
+map: evt_coke.gat
+map: ev_auction.gat
+map: jor_sanct.gat
+map: nif_dun01.gat
+map: nif_dun02.gat
+map: ordeal_a00.gat
+map: prt_prison.gat
+map: que_sign01.gat
+map: turbo_room.gat
+map: x_prt_evt.gat
+
+
+//できれば街に
+map: t_garden.gat
+map: ra_temple_.gat
+map: rag_fes.gat
+map: pronterar.gat
+map: pronterar.gat
+map: memohall.gat

@@ -14845,12 +14845,13 @@ int skill_castend_pos2( struct block_list *src, int x,int y,int skillid,int skil
 		break;
 	case AG_ASTRAL_STRIKE:		/* アストラルストライク */
 		{
-			int ar = skill_get_area(AG_ASTRAL_STRIKE_ATK,skilllv);
-			map_foreachinarea(skill_area_sub,
-				src->m,x-ar,y-ar,x+ar,y+ar,(BL_CHAR|BL_SKILL),
-				src,AG_ASTRAL_STRIKE_ATK,skilllv,tick,flag|BCT_ENEMY|1,
-				skill_castend_damage_id);
+
 			skill_unitsetting(src,skillid,skilllv,x,y,0);
+			int ar = skill_get_area(AG_ASTRAL_STRIKE_ATK, skilllv);
+			map_foreachinarea(skill_area_sub,
+				src->m, x - ar, y - ar, x + ar, y + ar, (BL_CHAR | BL_SKILL),
+				src, AG_ASTRAL_STRIKE_ATK, skilllv, tick, flag | BCT_ENEMY | 1,
+				skill_castend_damage_id);
 		}
 		break;
 	case NW_WILD_FIRE:		/* ワイルドファイア */

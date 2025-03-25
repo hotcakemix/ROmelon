@@ -1053,6 +1053,16 @@ void npc_click(struct map_session_data *sd, int id)
 		}
 #endif
 		break;
+	case BARTER:
+/*#if PACKETVER >= 20190116
+		{
+			sd->npc_id = id;
+			sd->npc_shopid = id;
+			clif_barter_list(sd, nd);
+			npc_event_dequeue(sd);
+		}
+#endif
+		break; */
 	case SCRIPT:
 		if(nd->u.scr.script) {
 			sd->npc_id = id;
@@ -2139,6 +2149,18 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 #else
 		subtype = MARKET;
 #endif
+	else if(strcmp(w2,"barter") == 0)
+#if PACKETVER < 20190116
+		return 0;
+#else
+		subtype = BARTER;
+#endif
+	else if (strcmp(w2, "expbarter") == 0)
+#if PACKETVER < 20190904
+		return 0;
+#else
+		subtype = EXPBARTER;
+#endif
 	else
 		subtype = 0;
 
@@ -2161,7 +2183,7 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 			return 0;	// assign‚³‚ê‚Ä‚È‚¢MAP‚È‚Ì‚ÅI—¹
 	}
 
-	if(subtype == SHOP || subtype == POINTSHOP || subtype == MARKET) {
+	if(subtype == SHOP || subtype == POINTSHOP || subtype == MARKET || subtype == BARTER) {
 		const int max = 100;
 		char *c;
 
@@ -2172,10 +2194,10 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 			int nameid, value = -1;
 			int qty = -1;
 			c++;
-			if(subtype == MARKET) {
-				if(sscanf(c, "%d:%d:%d", &nameid, &value, &qty) < 3) {
-					char *np = strchr(c, ',');
-					if(np) {
+			if (subtype == MARKET) {
+				if (sscanf(c, "%d:%d:%d", &nameid, &value, &qty) < 3) {
+					char* np = strchr(c, ',');
+					if (np) {
 						np[1] = 0;
 					}
 					printf("bad %s item %s : %s line %d\a\n", w2, c, w3, lines);
@@ -2245,7 +2267,7 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 			printf("bad substore name! (not exist) : %s line %d\a\n",srcname,lines);
 			return 0;
 		}
-		if(nd2->subtype != SHOP && nd2->subtype != POINTSHOP && nd2->subtype != MARKET) {
+		if(nd2->subtype != SHOP && nd2->subtype != POINTSHOP && nd2->subtype != MARKET && nd2->subtype != BARTER) {
 			printf("bad substore name! (not shop) : %s line %d\a\n",srcname,lines);
 			return 0;
 		}
@@ -3260,7 +3282,7 @@ static int npc_parse_srcfile(const char *filepath)
 
 		if (strcmpi(w2,"warp") == 0 && count > 3) {
 			ret = npc_parse_warp(w1,w2,w3,w4,lines);
-		} else if ((strcmpi(w2,"shop") == 0 || strcmpi(w2,"pointshop") == 0 || strcmpi(w2,"market") == 0) && count > 3) {
+		} else if ((strcmpi(w2,"shop") == 0 || strcmpi(w2,"pointshop") == 0 || strcmpi(w2,"market") == 0 || strcmpi(w2, "barter") == 0) && count > 3) {
 			ret = npc_parse_shop(w1,w2,w3,w4,lines);
 		} else if ((i = 0, sscanf(w2,"substore%n",&i), (i > 0 && w2[i] == '(')) && count > 3) {
 			ret = npc_parse_shop(w1,w2,w3,w4,lines);

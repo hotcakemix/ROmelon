@@ -3030,6 +3030,12 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			case GC_PHANTOMMENACE:
 			case GC_ROLLINGCUTTER:
 			case GC_CROSSRIPPERSLASHER:
+			case SHC_DANCING_KNIFE:		//れもん追加4次スキル対応
+			case SHC_SAVAGE_IMPACT:
+			case SHC_ETERNAL_SLASH:
+			case SHC_SHADOW_STAB:
+			case SHC_FATAL_SHADOW_CROW:
+			case SHC_IMPACT_CRATER:
 				if(map[src->m].flag.pk && target->type == BL_PC) {
 					edp_rate = (150 + sc->data[SC_EDP].val1 * 50) * battle_config.pk_edp_down_rate / 100;
 				} else if(map[src->m].flag.gvg) {
@@ -5566,15 +5572,15 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( 800, 100 );
 			break;
 		case ABR_BATTLE_BUSTER:		/* バトルバスター */
-			DMG_FIX( 300 * status_get_lv(src) / 100, 100 );
+			DMG_FIX( 30000 * status_get_lv(src) / 100, 100 );
 			calc_flag.idef = calc_flag.idef_ = 1;
 			break;
 		case ABR_DUAL_CANNON_FIRE:	/* デュアルキャノンファイヤー */
-			DMG_FIX( 150 * status_get_lv(src) / 100, 100 );
+			DMG_FIX( 15000 * status_get_lv(src) / 100, 100 );
 			calc_flag.idef = calc_flag.idef_ = 1;
 			break;
 		case ABR_INFINITY_BUSTER:	/* インフィニティバスター */
-			DMG_FIX( 500 * status_get_lv(src) / 100, 100 );
+			DMG_FIX( 50000 * status_get_lv(src) / 100, 100 );
 			calc_flag.idef = calc_flag.idef_ = 1;
 			break;
 		case 0:			// 通常攻撃

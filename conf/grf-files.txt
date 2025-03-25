@@ -4,12 +4,11 @@
 //   ファイルパスは絶対パス・相対パスどちらでもよい。
 //       grf: C:\Gravity\Ragnarok\data.grf
 //       grf: ./data.grf
-//   など。
+//   など
 
-grf: C:\Gravity\Ragnarok\data.grf
-grf: C:\Gravity\Ragnarok\sdata.grf
-grf: C:\Gravity\Ragnarok\adata.grf
-
+grf: G:\auriga\map.grf
+grf: G:\auriga\data1.grf
+		
 // datadir: <dataフォルダのディレクトリ>
 //   dataフォルダを利用していて且つdataフォルダの読み込みが最優先の場合などに設定する。
 //   dataフォルダのあるディレクトリを指定することでdataフォルダ内のresnametable.txtを読み込み対象にする。

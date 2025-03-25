@@ -1273,7 +1273,7 @@ int atcommand_heal(const int fd, struct map_session_data* sd, AtCommandType comm
 			sp = -sd->status.sp;
 	}
 
-	pc_heal(sd, hp, sp, 0, 1);
+	pc_heal(sd, hp, sp, 200, 1);
 	clif_displaymessage(fd, msg_txt(17));
 
 	return 0;

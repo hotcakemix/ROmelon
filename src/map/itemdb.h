@@ -33,6 +33,11 @@
 
 #define MAX_UPGRADE_LIST		10
 
+//れもん追加barter
+#define MAX_BARTER_ENTRY		100
+#define MAX_EXPBARTER_ENTRY		100
+#define MAX_EXPBARTER_ITEM		10
+
 struct item_data {
 	int nameid;
 	char name[48];
@@ -109,6 +114,19 @@ struct randopt_item_data {
 		int rate;
 	} opt[MAX_RANDOPT_TABLE];
 };
+//れもん追加barter
+struct barter_item_data {
+	int barter_id;	//識別番号scriptはこれから呼び出す
+	int nameid;	//貰うitemid
+	int value;	//barterで渡すitemid
+	int value2;	//barterで渡す個数
+	struct {
+		int nameid;		//expbarterに必要なアイテム
+		int refine;		//expbarterに必要なアイテムの精錬度	
+		int amount;		//expbarterに必要なアイテムの個数
+	}barter[MAX_EXPBARTER_ITEM];
+};
+
 
 struct item_data* itemdb_searchname(const char *name);
 struct item_data* itemdb_search(int nameid);
@@ -166,6 +184,12 @@ int itemdb_randopt_item(int nameid);
 struct randopt_item_data itemdb_randopt_data(int mobid, int nameid);
 
 bool itemdb_insert_randoptdb(struct randopt_item_data ro);
+
+int itemdb_barter_item(int nameid);
+int itemdb_expbarter_item(int nameid);
+struct barter_item_data itemdb_barter_data(int nameid);
+struct barter_item_data itemdb_expbarter_data(int nameid);
+
 
 void itemdb_reload(void);
 void do_final_itemdb(void);

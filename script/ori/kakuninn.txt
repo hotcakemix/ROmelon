@@ -1,0 +1,50 @@
+prontera.gat,150,150,4	script	itemaa	89,{
+	mes "[Refine Item NPC]";
+	mes "生成するアイテムのIDを入力してください。";
+	input @itemid;
+	next;
+	mes "精錬値を入力してください (0～20)。";
+	input @ref;
+	next;
+	// アイテムを生成
+	getitem2 @itemid,1,1,@ref,0,0,0,0,0;
+	mes "アイテムを生成しました！";
+	close;
+}
+
+prontera.gat,150,155,4	script	itema2	89,{
+	mes "[Refine Item NPC]";
+	mes "生成するアイテムのIDを入力してください。";
+	input '@itemid;
+	next;
+	mes "精錬値を入力してください (0～20)。";
+	input '@ref;
+	next;
+	mes "カード1を入力してください (0～20)。";
+	input '@card1;
+	next;
+	// アイテムを生成
+	getitem2 '@itemid,1,1,'@ref,0,'@card1,0,0,0;
+	mes "アイテムを生成しました！";
+	close;
+}
+
+prontera.gat,150,160,4	script	itemaopt	89,{
+	mes "[Refine Item NPC]";
+	mes "生成するアイテムのIDを入力してください。";
+	input '@itemid;
+	next;
+	mes "精錬値を入力してください (0～20)。";
+	input '@ref;
+	next;
+	mes "カード1を入力してください (0～20)。";
+	input '@card1;
+	next;
+	mes "optkeyを入力してください";
+	input '@opt;
+	next;
+	// アイテムを生成
+	getoptitem '@itemid,1,'@ref,0,'@card1,0,0,0,'@opt;
+	mes "アイテムを生成しました！";
+	close;
+}

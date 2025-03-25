@@ -180,6 +180,7 @@ void clif_buylist(struct map_session_data *sd, struct npc_data *nd);
 void clif_selllist(struct map_session_data *sd);
 void clif_pointshop_list(struct map_session_data *sd, struct npc_data *nd);
 void clif_market_list(struct map_session_data *sd, struct npc_data *nd);
+void clif_barter_list(struct map_session_data *sd, struct npc_data *nd);
 void clif_scriptmes(struct map_session_data *sd, int npcid, const char *mes);
 void clif_scriptmessize(struct map_session_data *sd, int npcid, int height, int width);
 void clif_scriptmespos(struct map_session_data *sd, int npcid, int x, int y);

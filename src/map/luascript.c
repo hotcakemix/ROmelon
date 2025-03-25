@@ -601,6 +601,31 @@ static int luafunc_InsertRandopt(lua_State *NL)
 }
 
 /*==========================================
+ * barter_db.lua
+ *------------------------------------------
+ */
+/*
+static int luafunc_InsertBarter(lua_State* NL) {
+	int nameid, amount;
+	int i = 0;
+	struct barter_item_data bi;
+
+
+}
+
+*/
+/*==========================================
+ * expbarter_db.lua
+ *------------------------------------------
+ */
+/*
+static int luafunc_InsertExpBarter(lua_State* NL) {
+
+
+
+}
+*/
+/*==========================================
  * achievement_db.lua
  *------------------------------------------
  */
@@ -670,6 +695,8 @@ const struct Lua_function luafunc[] = {
 	{"addpacket",luafunc_addpacket},
 	{"packet_key",luafunc_packet_key},
 	{"InsertRandopt",luafunc_InsertRandopt},
+	//{"InsertBarter",luafunc_InsertBarter},
+	//{"InsertExpBarter",luafunc_InsertExpBarter},
 	{"InsertAchieveInfo",luafunc_InsertAchieveInfo},
 	{"InsertAchieveContent",luafunc_InsertAchieveContent},
 	{"InsertAchieveDBEnd",luafunc_InsertAchieveDBEnd},

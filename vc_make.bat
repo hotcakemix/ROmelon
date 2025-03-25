@@ -67,7 +67,7 @@ rem 2007-07-11aSakexe: 20070711
 rem 2007-05-21aSakexe: 20070521
 rem 2007-02-12aSakexe: 20070212
 rem 2006-10-23aSakexe: 20061023
-set __PACKETDEF__=/D "PACKETVER=20151029" /D "NEW_006b"
+set __PACKETDEF__=/D "PACKETVER=20220406" /D "NEW_006b"
 
 rem ----------------------------------------------------------------
 rem コンパイラごとの設定（自分の環境にあうもののコメントアウトをはずす）
@@ -94,8 +94,8 @@ rem set __BITTYPE__=x64
 rem ---- Visual Studio 2019 64bitコンパイル の設定ここまで
 
 rem ---- Visual Studio 2022 64bitコンパイル の設定
-rem call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-rem set __BITTYPE__=x64
+ call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+ set __BITTYPE__=x64
 rem ---- Visual Studio 2022 64bitコンパイル の設定ここまで
 
 rem ----------------------------------------------------------------
@@ -116,14 +116,14 @@ rem データ保存方法が SQL の時、txt-converter が不要ならコメントアウトをはずす
 rem set __TXTCONVERTER__=SKIP
 
 rem zlib.dllをコンパイルするならコメントアウトをはずす
-rem set __ZLIB__=/D "LOCALZLIB"
+ set __ZLIB__=/D "LOCALZLIB"
 
 rem login_id2 や IP で AUTHFIFO を比較する場合はコメントアウトをはずす
 rem set __CMP_AFL2__=/D "CMP_AUTHFIFO_LOGIN2"
 rem set __CMP_AFIP__=/D "CMP_AUTHFIFO_IP"
 
 rem httpd を完全に無効にする場合コメントアウトをはずす
-set __NO_HTTPD__=/D "NO_HTTPD"
+rem set __NO_HTTPD__=/D "NO_HTTPD"
 
 rem httpd で外部 CGI を使う場合はコメントアウトする
 set __NO_HTTPD_CGI__=/D "NO_HTTPD_CGI"

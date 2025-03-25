@@ -6989,6 +6989,49 @@ void clif_market_list(struct map_session_data *sd, struct npc_data *nd)
 }
 
 /*==========================================
+ * barter販売リスト	れもん追加
+ *------------------------------------------
+ */
+
+void clif_barter_list(struct map_session_data* sd, struct npc_data* nd)
+{
+#if PACKETVER >= 20190116
+	int i,fd;
+	int c = 0;
+	struct item_data *id;
+
+	nullpo_retv(sd);
+	nullpo_retv(nd);
+
+	fd = sd->fd;
+
+	WFIFOW(fd, 0) = 0x0b0e;  // パケットID
+
+	for (i = 0; nd->u.shop_item[i].nameid > 0; i++) {
+		id = itemdb_search(nd->u.shop_item[i].nameid);
+		const int offset = 4 + c * 25;
+
+		WFIFOL(fd, offset + 0) = nd->u.shop_item[i].nameid;       // nameid（交換後にもらえる）
+		WFIFOB(fd, offset + 4) = id->type; // type
+		WFIFOL(fd, offset + 5) = nd->u.shop_item[i].qty;          // もらえる個数
+
+		WFIFOL(fd, offset + 9) = nd->u.shop_item[i].value;       // 要求アイテムID
+		WFIFOL(fd, offset + 13) = nd->u.shop_item[i].value2;      // 要求個数
+
+		WFIFOL(fd, offset + 17) = id->weight;
+		WFIFOL(fd, offset + 21) = c;                  // index
+		WFIFOW(fd, offset + 25) = id->view_id;        // viewSprite（拡張想定で最後に詰め）
+
+		c++;
+}
+
+	WFIFOW(fd, 2) = 4 + c * 25;
+	WFIFOSET(fd, WFIFOW(fd, 2));
+#endif
+}
+
+
+/*==========================================
  *
  *------------------------------------------
  */
@@ -11899,6 +11942,15 @@ void clif_damage(struct block_list *src, struct block_list *dst, unsigned int ti
 	nullpo_retv(dst);
 
 	sc = status_get_sc(dst);
+	//れもん追加ダメージスケール表示
+	if (dst->type == BL_MOB) {
+		struct mob_data* md = (struct mob_data*)dst;
+		struct mobdb_data* mob_info = mobdb_search(md->class_);
+		if (mob_info && mob_info->dscale > 0) {
+			damage = (damage + (mob_info->dscale / 2)) / mob_info->dscale;
+			damage2 = (damage2 + (mob_info->dscale / 2)) / mob_info->dscale;
+		}
+	}
 
 	if(type != 4 && dst->type == BL_PC) {
 		if( ((struct map_session_data *)dst)->special_state.infinite_endure )
@@ -13171,6 +13223,14 @@ void clif_skill_damage(struct block_list *src,struct block_list *dst,
 	nullpo_retv(dst);
 
 	sc = status_get_sc(dst);
+	//れもん追加ダメージスケール表示
+	if (dst->type == BL_MOB) {
+		struct mob_data* md = (struct mob_data*)dst;
+		struct mobdb_data* mob_info = mobdb_search(md->class_);
+		if (mob_info && mob_info->dscale > 0) {
+			damage = (damage + (mob_info->dscale / 2)) / mob_info->dscale;
+		}
+	}
 
 	if(type != 5 && dst->type == BL_PC && ((struct map_session_data *)dst)->special_state.infinite_endure)
 		type = 9;
@@ -23669,6 +23729,18 @@ static void clif_parse_NpcPointShopClose(int fd,struct map_session_data *sd, int
  *
  *------------------------------------------
  */
+static void clif_parse_BarterClose(int fd, struct map_session_data* sd, int cmd)
+{
+	nullpo_retv(sd);
+
+	sd->npc_shopid = 0;
+	return;
+}
+
+/*==========================================
+ *
+ *------------------------------------------
+ */
 static void clif_parse_NpcPointShopItemList(int fd,struct map_session_data *sd, int cmd)
 {
 	// TODO
@@ -28031,7 +28103,9 @@ static void clif_parse_MountOff(int fd, struct map_session_data *sd, int cmd)
 		break;
 	case 6:		// cart
 		if (sd->sc.data[SC_ON_PUSH_CART].timer != -1)
-			pc_setcart(sd, 0);
+		//	pc_setcart(sd, 0);		//元々の処理
+			pc_setoption(sd, sd->sc.option & ~OPTION_CARTMASK);
+			status_change_end(&sd->bl, SC_ON_PUSH_CART, -1);	//れもん修正合ってるのか不明
 		break;
 	default:	// unused
 		break;
@@ -28337,6 +28411,7 @@ static int packetdb_readdb_sub(char *line, int ln)
 		{ clif_parse_NpcSellListSend,             "npcselllistsend"           },
 		{ clif_parse_NpcPointShopOpen,            "npcpointshopopen"          },
 		{ clif_parse_NpcPointShopClose,           "npcpointshopclose"         },
+		{ clif_parse_BarterClose,				  "barterclose"				  },
 		{ clif_parse_NpcPointShopItemList,        "npcpointshopitemlist"      },
 		{ clif_parse_NpcPointShopBuy,             "npcpointshopbuy"           },
 		{ clif_parse_CreateChatRoom,              "createchatroom"            },

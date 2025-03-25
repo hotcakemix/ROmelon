@@ -2520,6 +2520,117 @@ int bonus_randopt(struct map_session_data *sd,int id,int val)
 	case OPT_MDAMAGE_SIZE_LARGE_USER:
 		sd->magic_subsize[id-OPT_MDAMAGE_SIZE_SMALL_USER] += val;
 		break;
+	case RACE_WEAPON_TOLERACE_NOTHING:	//‚ê‚à‚ñ’Ç‰Á‚±‚±‚©‚ç
+	case RACE_WEAPON_TOLERACE_UNDEAD:
+	case RACE_WEAPON_TOLERACE_ANIMAL:
+	case RACE_WEAPON_TOLERACE_PLANT:
+	case RACE_WEAPON_TOLERACE_INSECT:
+	case RACE_WEAPON_TOLERACE_FISHS:
+	case RACE_WEAPON_TOLERACE_DEVIL:
+	case RACE_WEAPON_TOLERACE_HUMAN:
+	case RACE_WEAPON_TOLERACE_ANGEL:
+	case RACE_WEAPON_TOLERACE_DRAGON:
+	case RANGE_WEAPON_ATTACK_DAMAGE_TARGET:
+	case RANGE_WEAPON_ATTACK_DAMAGE_USER:
+		break;	// –¢ŽÀ‘•194-205
+	case RACE_TOLERACE_PLAYER_HUMAN:
+	case RACE_TOLERACE_PLAYER_DORAM:
+	case RACE_DAMAGE_PLAYER_HUMAN:
+	case RACE_DAMAGE_PLAYER_DORAM:
+	case RACE_MDAMAGE_PLAYER_HUMAN:
+	case RACE_MDAMAGE_PLAYER_DORAM:
+	case RACE_CRI_PERCENT_PLAYER_HUMAN:
+	case RACE_CRI_PERCENT_PLAYER_DORAM:
+	case RACE_IGNORE_DEF_PERCENT_PLAYER_HUMAN:
+	case RACE_IGNORE_DEF_PERCENT_PLAYER_DORAM:
+	case RACE_IGNORE_MDEF_PERCENT_PLAYER_HUMAN:
+	case RACE_IGNORE_MDEF_PERCENT_PLAYER_DORAM:
+	case REFLECT_DAMAGE_PERCENT:
+	case MELEE_ATTACK_DAMAGE_TARGET:
+	case MELEE_ATTACK_DAMAGE_USER:
+		break;	// –¢ŽÀ‘•206-220
+	case ADDSKILLMDAMAGE_NOTHING:
+	case ADDSKILLMDAMAGE_WATER:
+	case ADDSKILLMDAMAGE_GROUND:
+	case ADDSKILLMDAMAGE_FIRE:
+	case ADDSKILLMDAMAGE_WIND:
+	case ADDSKILLMDAMAGE_POISON:
+	case ADDSKILLMDAMAGE_SAINT:
+	case ADDSKILLMDAMAGE_DARKNESS:
+	case ADDSKILLMDAMAGE_TELEKINESIS:
+	case ADDSKILLMDAMAGE_UNDEAD:
+	case ADDSKILLMDAMAGE_ALL:
+		if (sd->state.lr_flag != 2) {
+			if (id == ADDSKILLMDAMAGE_ALL) {
+				int i;
+				for (i = 0; i < ELE_MAX; i++)
+					sd->skill_elemagic_dmgup[i] += val;
+			}
+			else
+				sd->skill_elemagic_dmgup[id - ADDSKILLMDAMAGE_NOTHING] += val;
+		}
+		break;
+	case ADDEXPPERCENT_KILLRACE_NOTHING:
+	case ADDEXPPERCENT_KILLRACE_UNDEAD:
+	case ADDEXPPERCENT_KILLRACE_ANIMAL:
+	case ADDEXPPERCENT_KILLRACE_PLANT:
+	case ADDEXPPERCENT_KILLRACE_INSECT:
+	case ADDEXPPERCENT_KILLRACE_FISHS:
+	case ADDEXPPERCENT_KILLRACE_DEVIL:
+	case ADDEXPPERCENT_KILLRACE_HUMAN:
+	case ADDEXPPERCENT_KILLRACE_ANGEL:
+	case ADDEXPPERCENT_KILLRACE_DRAGON:
+	case ADDEXPPERCENT_KILLRACE_ALL:
+		break;	// –¢ŽÀ‘•206-242
+	case OPT_POWAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[6] += val;
+		break;
+	case OPT_STAAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[7] += val;
+		break;
+	case OPT_WISAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[8] += val;
+		break;
+	case OPT_SPLAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[9] += val;
+		break;
+	case OPT_CONAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[10] += val;
+		break;
+	case OPT_CRTAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[11] += val;
+		break;
+	case OPT_PATKAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->patk += val;
+		break;
+	case OPT_SMATKAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->smatk += val;
+		break;
+	case OPT_RESAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->res += val;
+		break;
+	case OPT_MRESAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->mres += val;
+		break;
+	case OPT_HEAL_PLUS:
+		if (sd->state.lr_flag != 2)
+			sd->hplus += val;
+		break;
+	case OPT_CRITICAL_RATE:
+		if (sd->state.lr_flag != 2)
+			sd->crate += val;
+		break;
+
 	default:
 		if(battle_config.error_log)
 			printf("bonus_randopt: unknown type %d %d!\n",id,val);

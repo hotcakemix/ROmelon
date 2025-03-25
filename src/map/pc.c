@@ -67,7 +67,7 @@
 
 #define PVP_CALCRANK_INTERVAL 1000	// PVP順位計算の間隔
 #define MAX_EXP_TABLE	18		// 経験値テーブル最大数（exp.txtの列数に合わせる）
-#define MAX_SKILL_NEED	9		// スキルツリーの要求スキル最大数（skill_tree.txt）
+#define MAX_SKILL_NEED	12		// スキルツリーの要求スキル最大数（skill_tree.txt）れもん追加9から12に変更スピハンのスキル振れないため
 
 static atn_bignumber exp_table[MAX_EXP_TABLE][MAX_LEVEL];
 
@@ -7977,9 +7977,43 @@ void pc_setoption(struct map_session_data *sd, unsigned int type)
 {
 	nullpo_retv(sd);
 
-	if( ((type&OPTION_MADOGEAR) || pc_isgear(sd)) && pc_iscarton(sd) )
-		type |= (sd->sc.option&OPTION_CARTMASK) | OPTION_PUSHCART;
+	//れもん追加修正魔導ギアとカート合ってるのかはわからん　20220406蔵（動作確認済み）それ以下は未確認
+	if ((type & OPTION_MADOGEAR) && !pc_isgear(sd)) {
+		if (pc_iscarton(sd)) {
+			type |= (sd->sc.option & OPTION_CARTMASK) | OPTION_PUSHCART;
+		}
+#if PACKETVER > 20191106
+		clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, 2, 0, 0);
+#endif
+	}
+	else if (!(type & OPTION_MADOGEAR) && pc_isgear(sd)) {
+		status_change_end(&sd->bl, SC_ACCELERATION, -1);
+		status_change_end(&sd->bl, SC_HOVERING, -1);
+		status_change_end(&sd->bl, SC_OVERHEAT, -1);
+		status_change_end(&sd->bl, SC_SHAPESHIFT, -1);
+#if PACKETVER > 20191106
+			clif_status_load_id(sd, SI_MADOGEAR, 0);
+#endif
+	}
 
+
+	/*
+	if (((type & OPTION_MADOGEAR) || pc_isgear(sd)) && pc_iscarton(sd)) {
+		type |= (sd->sc.option & OPTION_CARTMASK) | OPTION_PUSHCART;
+	#if PACKETVER > 20191106
+		clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, 2, 0, 0);
+	#endif
+	}
+	if (!(type & OPTION_MADOGEAR) && pc_isgear(sd)) {
+		status_change_end(&sd->bl, SC_ACCELERATION, -1);
+		status_change_end(&sd->bl, SC_HOVERING, -1);
+		status_change_end(&sd->bl, SC_OVERHEAT, -1);
+		status_change_end(&sd->bl, SC_SHAPESHIFT, -1);
+	#if PACKETVER > 20191106
+		clif_status_load_id(sd, SI_MADOGEAR, 0);
+	#endif
+	}
+	*/
 	if( (type&OPTION_FALCON) && !pc_isfalcon(sd) ) {
 		clif_status_load_id(sd,SI_FALCON,1);
 	}

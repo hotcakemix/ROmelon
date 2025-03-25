@@ -1,0 +1,897 @@
+-	script	ジョブチェンジャー	-1,{
+	//getbaseclass( <class>,[<type>]);
+	//入力値<class> : 職業値(Class)を入力
+	//入力値<type> : 取得する前職業の種別を指定（省略可）
+	//出力値 : 前職業のClass値
+
+	// 使用するキャラ永続変数
+	// upper_cnt : 転生回数を保持
+	// OLD_CLASS : 転生前のクラスを保持
+
+
+	//養子はないです
+	//転生回数1回、拡張及びサモナーの転生は想定していません
+	//3次まで有効なら転生回数ふやしても大丈夫なはず
+
+
+	//関数宣言
+	function JobChangeToOS;		//ノービス or 一次 テコンから2次まで
+	function Transmigration;	//転生
+	function TransmigrationSub;
+	function GetTransRequireBase;
+	function GetTransRequireJob;
+	function CheckTransLevel;
+	function JobChangeTo3rd;	//3次職
+	function JobChangeToEX;		//拡張転職、星帝・リーパーからこっち
+	function JobChangeToEX4th;	//拡張4次職
+	function JobChangeTo4th;	//4次職
+	function JobChangeToSH; 	//スピリットハンドラー転職
+	function GetJobName;		//職業名取得
+	// 設定
+	if('config == 0){	// 起動後初めて呼ばれたときのみ実行
+		// 転生回数上限
+		set 'upper_limit,1;
+		// 転生に必要なZeny
+		set 'upper_zeny,0;
+		// 転生に必要なレベル
+		set 'trans_require_base,99;		// 未転生⇒転生　ベース
+		set 'trans_require_job,50;		// 未転生⇒転生　ジョブ
+
+		// 転生ボーナス
+		set 'status_bonus_rate,1000;	// ステータスポイントに転生回数×'status_bonus_rateのボーナス
+		set 'skill_bonus_rate,1;	// スキルポイントに転生回数×'skill_bonus_rateのボーナス
+
+
+		//拡張上位職を有効にする（朧・影狼・リベ・星帝・リーパー・拡張スパノビ）
+		set 'enable_EP_class,1;		// 1で有効、それ以外で無効
+		
+		//拡張上位職が有効な場合拡張4次職を有効にする
+		if('enable_EP_class == 1){
+			set 'enable_EP4th_class,1;	// 1で有効、それ以外で無効
+		}
+
+		// 3次職を有効にする
+		set 'enable_3rd_class,1;	// 1で有効、それ以外で無効
+
+		//	3次職が有効な場合のみ4次職及びスピリットハンドラーを有効にする
+		if('enable_3rd_class == 1){
+			// 4次職を有効にする
+			set 'enable_4th_class,1;	// 1で有効、それ以外で無効
+			// スピリットハンドラーを有効にする
+			set 'enable_SH_class,1;		// 1で有効、それ以外で無効
+		}
+
+		if('enable_3rd_class == 1){
+			// 3次職転職時にステータスをリセットする
+			set 'status_reset_3rd,0;	// 1でリセットする、それ以外でしない
+			// 3次職転職時にスキルをリセットする
+			set 'skill_reset_3rd,0;		// 1でリセットする、それ以外でしない
+
+			// 3次職に転職するために必要なレベル
+			set 'require_base_to3rd,99;	// ベース
+			set 'require_job_to3rd,70;	// ジョブ
+		}
+
+		if('enable_4th_class == 1){
+			// 4次職に転職するために必要なレベル
+			set 'require_base_to4th,200;	// ベース
+			set 'require_job_to4th,70;	// ジョブ
+		}
+		if('enable_SH_class == 1){
+			// スピリットハンドラーに転職するために必要なレベル
+			set 'require_base_toSH,200;	// ベース
+			set 'require_job_toSH,60;	// ジョブ
+		}
+		// 設定完了フラグ
+		set 'config,1;
+	}
+
+	if(Job >= Job_DragonKnight){
+		mes "[ジョブチェンジャー]";
+		mes "あなたはこれ以上転職はできません。";
+		close;
+	}
+	
+	// スピリットハンドラー有効
+	if(Job == Job_Summoner){
+		if('enable_SH_class == 1 ) {
+			JobChangeToSH;
+			close;
+		} else {			//無効
+			mes "[ジョブチェンジャー]";
+			mes "あなたはこれ以上転職はできません。";
+			close;
+		}
+	}
+
+	// 1次から4次まで
+	if(Job < Job_Knight || Job == Job_Taekwon) {
+		JobChangeToOS;
+		close;
+	}else if(job >= Job_Knight && job <= Job_Dancer) {
+		switch(upper) {
+		case 0:	// 未転生
+			Transmigration;
+			close;
+		case 1:	// 転生済み
+			// 転生２次
+			if(job >= Job_Knight && job <= Job_Dancer) {
+				if('enable_3rd_class == 1){// 三次職有効
+					JobChangeTo3rd;
+				}else{	// 三次職無効
+					Transmigration;
+					break;
+				}
+			}
+		}
+	}else if(Job >= Job_RuneKnight && Job <= Job_ShadowChaser){	//	//4次職が有効な場合
+		if('enable_4th_class == 1){
+			JobChangeTo4th;
+			close;
+		} else {	//4次職無効
+			mes "[ジョブチェンジャー]";
+			mes "あなたはこれ以上の転職はできません。";
+			close;
+			}
+	}else if(Job >= Job_SuperNovice && Job <= Job_Ninja){	//拡張上位が有効な場合
+			if('enable_EP_class == 1){
+				JobChangeToEX;
+				close;
+			}else{
+				mes "[ジョブチェンジャー]";
+				mes "あなたはこれ以上の転職はできません。";
+				close;
+			}
+	}else if(Job >= Job_ExpandedSuperNovice && Job <= Job_SoulReaper && Job != Job_Summoner){	//拡張4次職
+			if('enable_EP4th_class == 1){
+				JobChangeToEX4th;
+				close;
+			}else{
+				mes "[ジョブチェンジャー]";
+				mes "あなたはこれ以上の転職はできません。";
+				close;
+			}
+	}
+	close;
+
+	//関数定義
+	//JobChangeToOS
+	//転職1.2次職
+	function JobChangeToOS {
+		switch(upper){
+		case 0:	//未転生
+			switch(Job) {
+			case Job_Novice:	// ノービス⇒一次職への転職
+				if(JobLevel < 10) {
+					//転職不可能、終了
+					mes "[ジョブチェンジャー]";
+					mes "転職条件に達していません。";
+					mes "^0000FF「JobLv 10以上」";
+					mes "一次職に転職するためには";
+					mes "以上の条件を満たす必要があります。";
+					close;
+				}
+				set upper_cnt,0;	//転生回数初期化
+				mes "[ジョブチェンジャー]";
+				mes "一次職への転職ですね。";
+				mes "どの職業に転職しますか？";
+				next;
+				setarray '@jobname$,"^0000FF（剣）^000000ソードマン",
+					"^0000FF（魔）^000000マジシャン","^0000FF（弓）^000000アーチャー",
+					"^0000FF（聖）^000000アコライト","^0000FF（商）^000000マーチャント",
+					"^0000FF（盗）^000000シーフ","^AA0000（初）^000000スーパーノービス",
+					"^AA0000（闘）^000000テコンキッド","^AA0000（銃）^000000ガンスリンガー",
+					"^AA0000（忍）^000000忍者","やめる";
+					set @menu,select(printarray('@jobname$));
+				switch(@menu) {
+				case 1: //剣士
+					set '@changejob,Job_Swordman;
+					break;
+				case 2: //マジシャン
+					set '@changejob,Job_Magician;
+					break;
+				case 3: //アーチャー
+					set '@changejob,Job_Archer;
+					break;
+				case 4: //アコライト
+					set '@changejob,Job_Acolyte;
+					break;
+				case 5: //商人
+					set '@changejob,Job_Merchant;
+					break;
+				case 6: //シーフ
+					set '@changejob,Job_Thief;
+					break;
+				case 7: //スーパーノービス
+					if(BaseLevel < 45) {
+						mes "[ジョブチェンジャー]";
+						mes "スーパーノービスに転職するには";
+						mes "ベースレベル45以上が必要です。";
+						mes "またのご利用を、お待ちしております。";
+						close;
+					}
+					set '@changejob,Job_SuperNovice;
+					break;
+				case 8: //テコンキッド
+					set '@changejob,Job_TaeKwon;
+					break;
+				case 9: //ガンスリンガー
+					set '@changejob,Job_Gunslinger;
+					break;
+				case 10://忍者
+					set '@changejob,Job_Ninja;
+					break;
+				}
+				GetJobName '@jobname$,'@changejob,0;
+				mes "[ジョブチェンジャー]";
+				mes "^0000FF" +'@jobname$+ "^000000に転職しますか？";
+				next;
+				if(select("転職する","やめる")==2) close;
+				unequip;
+				jobchange '@changejob,0;
+				emotion 21;
+				close;
+			case Job_Swordman:
+				setarray '@jobid,Job_Knight,Job_Crusader;
+				break;
+			case Job_Acolyte:
+				setarray '@jobid,Job_Priest,Job_Monk;
+				break;
+			case Job_Magician:
+				setarray '@jobid,Job_Wizard,Job_Sage;
+				break;
+			case Job_Merchant:
+				setarray '@jobid,Job_Blacksmith,Job_Alchemist;
+				break;
+			case Job_Archer:
+				if(Sex)
+					setarray '@jobid,Job_Hunter,Job_Bard;
+				else
+					setarray '@jobid,Job_Hunter,Job_Dancer;
+				break;
+			case Job_Thief:
+				setarray '@jobid,Job_Assassin,Job_Rogue;
+				break;
+			case Job_Taekwon:	//テコン
+				setarray '@jobid,Job_StarGladiator,Job_SoulLinker;
+				break;
+			}
+			if(JobLevel < 40) {
+				//転職不可能、終了
+				mes "[ジョブチェンジャー]";
+				mes "転職条件に達していません。";
+				mes "^0000FF「JobLv 40以上」";
+				mes "二次職に転職するためには";
+				mes "以上の条件を満たす必要があります。";
+				break;
+			}
+			mes "[ジョブチェンジャー]";
+			mes "二次職への転職ですね。";
+			mes "どの職業に転職しますか？";
+			next;
+			//転職可能な職業を選択肢にセット
+			GetJobName '@jobname$[0],'@jobid[0],0;
+			GetJobName '@jobname$[1],'@jobid[1],0;
+			switch(select(printarray('@jobname$))){
+			case 1:	// 転職
+			case 2:
+				set '@changeto,@menu-1;
+				break;
+			case 3:
+				mes "[ジョブチェンジャー]";
+				mes "またお越しください。";
+				close; //やめる
+			}
+			mes "[ジョブチェンジャー]";
+			mes "^0000FF" +'@jobname$['@changeto]+ "^000000に転職しますか？";
+			next;
+			if(select("転職する","やめる")==2){
+				mes "[ジョブチェンジャー]";
+				mes "またお越しください。";
+				break; //やめる
+			}
+			unequip;//装備をはずす
+			//キャラクターの転職
+			jobchange '@jobid['@changeto],0;
+			emotion 21;
+			break;
+		case 1:	// 転生済み
+			if(job == 0){	// ハイノービス
+				mes "[ジョブチェンジャー]";
+				mes "あなたは^0000ffハイノービス^000000ですね。";
+				next;
+				if(JobLevel < 10){
+					mes "[ジョブチェンジャー]";
+					mes "あれ？JOBLvが足りないみたい。";
+					mes "JOBLv10まであげてきてね。";
+					break;
+				}
+				switch(OLD_CLASS){
+					case CLASS_CR:
+					case CLASS_KN:	set '@tensei1,Job_Swordman;break;
+					case CLASS_WZ:
+					case CLASS_SA:	set '@tensei1,Job_Magician;break;
+					case CLASS_DC:
+					case CLASS_BA:
+					case CLASS_HT:	set '@tensei1,Job_Archer;break;
+					case CLASS_MO:
+					case CLASS_PR:	set '@tensei1,Job_Acolyte;break;
+					case CLASS_AM:
+					case CLASS_BS:	set '@tensei1,Job_Merchant;break;
+					case CLASS_RG:
+					case CLASS_AS:	set '@tensei1,Job_Thief;break;
+				}
+				GetJobName '@jobname1$,'@tensei1,1;
+				mes "[ジョブチェンジャー]";
+				mes "^0000FF" +'@jobname1$+ "^000000に転職しますか？";
+				next;
+				if(select("転職する","やめる")==2) close;
+				jobchange '@tensei1,1;
+				emotion 21;
+			} else if (job < 7){
+				mes "[ジョブチェンジャー]";
+				mes "転生2次職へ転職ですね。";
+				next;
+				if(JobLevel < 40){
+					mes "[ジョブチェンジャー]";
+					mes "あれ？JOBLvが足りないみたい。";
+					mes "最低でも40は必要よ。";
+					break;
+				}
+				switch(OLD_CLASS){
+					case CLASS_KN2:
+					case CLASS_KN:		set '@tensei2,Job_Knight;break;
+					case CLASS_PR:		set '@tensei2,Job_Priest;break;
+					case CLASS_WZ:		set '@tensei2,Job_Wizard;break;
+					case CLASS_BS:		set '@tensei2,Job_Blacksmith;break;
+					case CLASS_HT:		set '@tensei2,Job_Hunter;break;
+					case CLASS_AS:		set '@tensei2,Job_Assassin;break;
+					case CLASS_CR2:
+					case CLASS_CR:		set '@tensei2,Job_Crusader;break;
+					case CLASS_MO:		set '@tensei2,Job_Monk;break;
+					case CLASS_SA:		set '@tensei2,Job_Sage;break;
+					case CLASS_RG:		set '@tensei2,Job_Rogue;break;
+					case CLASS_AM:		set '@tensei2,Job_Alchemist;break;
+					case CLASS_BA:		set '@tensei2,Job_Bard;break;
+					case CLASS_DC:		set '@tensei2,Job_Dancer;break;
+				}
+				GetJobName '@jobname2$,'@tensei2,1;
+				mes "[ジョブチェンジャー]";
+				mes "^0000FF" +'@jobname2$+ "^000000に転職しますか？";
+				next;
+				if(select("転職する","やめる")==2) close;
+				jobchange '@tensei2,1;
+				emotion 21;
+			}
+			break;
+		}
+	}
+
+	// Transmigration
+	// 転生処理を行うサブルーチン
+	function Transmigration {
+		switch(TransmigrationSub()){
+		case 0:	// 成功
+			mes "[ジョブチェンジャー]";
+			mes "転生完了しました。";
+			mes "またのご利用を、お待ちしております。";
+			break;
+		case 1:	// 転生回数オーバー
+			mes "[ジョブチェンジャー]";
+			mes "あなたは限界まで転生を";
+			mes "行いましたので、";
+			mes "これ以上転生することはできません。";
+			mes "何事も限度というものがありますよね…";
+			break;
+		case 2:	// レベル不足
+			mes "[ジョブチェンジャー]";
+			mes "転生条件に達していません。";
+	 		break;
+		case 3:	// カート・ファルコン・ペコペコ
+			mes "[ジョブチェンジャー]";
+			mes "カート、ファルコン、ペコペコ、";
+			mes "ドラゴン、魔道ギア、ウォーグを";
+			mes "外してから";
+			mes "いらしてください。";
+			break;
+		case 4:	// ホムンクルス
+			mes "[ジョブチェンジャー]";
+			mes "ホムンクルスと別れてから";
+			mes "いらしてください。";
+			break;
+		case 5:	// 費用不足
+			mes "[ジョブチェンジャー]";
+			mes "転生費用が足りませんよ";
+			mes ""+'upper_zeny*upper_cnt+"z必要です。";
+			break;
+		}
+		return;
+	}
+	function TransmigrationSub {
+		if(upper_cnt >= 'upper_limit) return 1;
+		mes "[ジョブチェンジャー]";
+		mes "あなたが転生を行うためには";
+		mes "次の条件を満たす必要があります。";
+		next;
+		mes "[ジョブチェンジャー]";
+		mes "BaseLv ^0000FF"+GetTransRequireBase()+"^000000 以上";
+		mes "JobLv ^0000FF"+GetTransRequireJob()+"^000000 以上";
+		mes "^0000FF"+'upper_zeny*upper_cnt+"^000000 Zeny以上所持";
+		mes " カート・ペコペコ・ファルコン";
+		mes " ドラゴン・魔道ギア・ウォーグ";
+		mes " を利用していない";
+		next;
+		mes "[ジョブチェンジャー]";
+		mes "^0000FF必要Zenyは転生費用となり、";
+		mes "消費されますので注意してください。^000000";
+		mes "転生を行いますか？";
+		next;
+		if(select("転生する","やめる")==2) {
+			close;
+		//転生条件のチェック
+		} else if(!CheckTransLevel()) return 2;			// レベル不足
+	 	else if(checkcart() || checkfalcon() || checkriding() ||	// カート・ファルコン・ペコペコ
+			checkdragon() || checkgear() || checkwolf()) return 3;	// ドラゴン・魔道ギア・ウォーグ
+		else if(gethomuninfo(5)) return 4;					// ホムンクルス
+		else if(Zeny < 'upper_zeny*upper_cnt) return 5;					// 費用不足
+		set Zeny,Zeny-'upper_zeny*upper_cnt;
+		set upper_cnt,upper_cnt+1;	// 転生回数加算
+		set OLD_CLASS,getbaseclass(Class,2);		// 転生前クラスの保存
+		
+		jobchange 0,(upper == 2) ? 2 : 1;
+		//ステータス・スキル・Lvのリセット
+		set BaseLevel,1;
+		resetstatus;
+		resetskill;
+		//ボーナスポイントを獲得
+		set StatusPoint,'status_bonus_rate * upper_cnt;
+		set SkillPoint,'skill_bonus_rate * upper_cnt;
+		set PC_SHOP_POINT,PC_SHOP_POINT + 3000;
+		emotion 46;
+		return 0;	// 成功
+	}
+
+	// 転生可能なレベルの取得
+	function GetTransRequireBase {
+		if(Job >= Job_RuneKnight && Job <= Job_ShadowChaser)	// ３次
+			return 'trans_require_base_3rd;
+		switch(upper){
+		case 0:	// 未転生
+			return 'trans_require_base;
+		case 1:	// 転生済み
+			return 'trans_require_base_upper;
+		}
+		return 0;
+	}
+	function GetTransRequireJob {
+		if(Job >= Job_Runeknight && Job <= Job_ShadowChaser)	// ３次
+			return 'trans_require_job_3rd;
+		switch(upper){
+		case 0:	// 未転生
+			return 'trans_require_job;
+		case 1:	// 転生済み
+			return 'trans_require_job_upper;
+		}
+		return 0;
+	}
+	// CheckTransLevel
+	// 転生可能かどうかのレベル判定。可能なら1、不可能なら0を返す
+	function CheckTransLevel {
+		if(Job >= Job_Runeknight && Job <= Job_ShadowChaser)	// ３次
+			return (BaseLevel >= 'trans_require_base_3rd && JobLevel >= 'trans_require_job_3rd) ? 1 : 0;
+		switch(upper){
+		case 0:	// 未転生
+			return (BaseLevel >= 'trans_require_base && JobLevel >= 'trans_require_job) ? 1 : 0;
+		case 1:	// 転生済み
+			return (BaseLevel >= 'trans_require_base_upper && JobLevel >= 'trans_require_job_upper) ? 1 : 0;
+		case 2:	// 養子（ここには到達しないはず）
+			return 0;
+		}
+		return 0;	// 何のジョブかわからないためとりあえず不可
+	}
+
+	// JobChangeTo3rd
+	// ３次に転職を行うサブルーチン
+	function	JobChangeTo3rd {
+		if(BaseLevel >= 'require_base_to3rd && JobLevel >= 'require_job_to3rd && job >= Job_Knight && job <= Job_Dancer){
+			mes "[ジョブチェンジャー]";
+			mes "3次職へ転職ですね。";
+			next;
+			switch(job){
+			case Job_Knight:		set '@tensei3,Job_RuneKnight;break;
+			case Job_Priest:		set '@tensei3,Job_ArchBishop;break;
+			case Job_Wizard:		set '@tensei3,Job_Warlock;break;
+			case Job_Blacksmith:	set '@tensei3,Job_Mechanic;break;
+			case Job_Hunter:		set '@tensei3,Job_Ranger;break;
+			case Job_Assassin:		set '@tensei3,Job_Guillotine;break;
+			case Job_Crusader:		set '@tensei3,Job_RoyalGuard;break;
+			case Job_Monk:			set '@tensei3,Job_Shura;break;
+			case Job_Sage:			set '@tensei3,Job_Sorcerer;break;
+			case Job_Rogue:			set '@tensei3,Job_ShadowChaser;break;
+			case Job_Alchemist:		set '@tensei3,Job_Genetic;break;
+			case Job_Bard:			set '@tensei3,Job_Minstrel;break;
+			case Job_Dancer:		set '@tensei3,Job_Wanderer;break;
+			}
+			GetJobName '@jobname3$,'@tensei3,0;
+			mes "[ジョブチェンジャー]";
+			mes "^0000FF" +'@jobname3$+ "^000000に転職しますか？";
+			if('status_reset_3rd == 1){
+				if('skill_reset_3rd == 1){
+					mes "なお、^0000FF" + '@jobname3$ + "へ転職すると";
+					mes "ステータスとスキルが全て";
+					mes "リセットされます。";
+				} else {
+					mes "なお、^0000FF" + '@jobname3$ + "へ転職すると";
+					mes "ステータスがリセットされます。";
+				}
+			} else if('skill_reset_3rd == 1){
+				mes "なお、^0000FF" + '@jobname3$ + "へ転職すると";
+				mes "スキルがリセットされます。";
+			}
+			if(select("転職する","やめる")==2) close;
+			if('status_reset_3rd == 1) resetstatus;
+			if('skill_reset_3rd == 1) resetskill;
+			setoption 0x0000;
+			jobchange '@tensei3,upper;
+		} else {
+			mes "[ジョブチェンジャー]";
+			mes "３次職に転職するためには";
+			mes "ベースレベルが"+'require_base_to3rd+"";
+			mes "ジョブレベルが"+'require_job_to3rd+"";
+			mes "だけ必要になります。";
+		}
+		return;
+	}
+
+
+	//JobChangeToEX
+	//拡張上位職
+	function JobChangeToEX{
+		if(BaseLevel >= 'require_base_to3rd && (((Job == Job_StarGladiator || Job == Job_SoulLinker ) && JobLevel == 50 )
+		|| ((Job == Job_Gunslinger || Job == Job_Ninja) && JobLevel ==70) || (Job == Job_SuperNovice) && JobLevel == 99)){
+			mes "[ジョブチェンジャー]";
+			mes "拡張上位職へ転職ですね。";
+			next;
+			switch(job){
+			case Job_StarGladiator:		set '@EXP,Job_StarEmperor;break;
+			case Job_SoulLinker:		set '@EXP,Job_SoulReaper;break;
+			case Job_Gunslinger:		set '@EXP,Job_Rebellion;break;
+			case Job_SuperNovice:		set '@EXP,Job_ExpandedSuperNovice;break;
+			case Job_Ninja:
+				if(Sex){
+					set '@EXP,Job_Kagerou;break;
+				}else{
+					set '@EXP,Job_Oboro;break;
+				}
+			break;
+			}
+			GetJobName '@jobnameEXP$,'@EXP,0;
+			mes "[ジョブチェンジャー]";
+			mes "^0000FF" +'@jobnameEXP$+ "^000000に転職しますか？";
+			if(select("転職する","やめる")==2) close;
+			setoption 0x0000;
+			jobchange '@EXP,0;
+		} else {
+			mes "[ジョブチェンジャー]";
+			mes "拡張上位職に転職するためには";
+			mes "ベースレベルが"+'require_base_to3rd+"";
+			mes "ジョブレベルが"+'require_job_to3rd+"";
+			mes "拳聖ソウルリンカーはジョブレベル50";
+			mes "拡張スーパーノービスはジョブレベル99";
+			mes "が必要になります。";
+		}
+		return;
+	}
+
+	//JobChangeToEX4th
+	//拡張4次職
+	function JobChangeToEX4th{
+		if(BaseLevel >= 'require_base_to4th && JobLevel >= 'require_job_to4th ) {
+			mes "[ジョブチェンジャー]";
+			mes "拡張4次職へ転職ですね。";
+			next;
+			switch(job){
+			case Job_ExpandedSuperNovice:		set '@EXP4,Job_HyperNovice;break;
+			case Job_Kagerou:					set '@EXP4,Job_Shinkiro;break;
+			case Job_Oboro:						set '@EXP4,Job_Shiranui;break;
+			case Job_Rebellion:					set '@EXP4,Job_NightWatch;break;
+			case Job_StarEmperor:				set '@EXP4,Job_SkyEmperor;break;
+			case Job_SoulReaper:				set '@EXP4,Job_SoulAscetic;break;
+			}
+			GetJobName '@jobnameEXP4$,'@EXP4,0;
+			mes "[ジョブチェンジャー]";
+			mes "^0000FF" +'@jobnameEXP4$+ "^000000に転職しますか？";
+			if(select("転職する","やめる")==2) close;
+			setoption 0x0000;
+			jobchange '@EXP4,0;
+		} else {
+			mes "[ジョブチェンジャー]";
+			mes "拡張4次職に転職するためには";
+			mes "ベースレベルが"+'require_base_to4th+"";
+			mes "ジョブレベルが"+'require_job_to4th+"";
+			mes "必要になります。";
+		}
+		return;
+	}
+	
+	//JobChangeTo4th
+	//4次職転職
+	function JobChangeTo4th {
+		if(BaseLevel >= 'require_base_to4th && JobLevel >= 'require_job_to4th && Job >= Job_RuneKnight && Job <= Job_ShadowChaser){
+			mes "[ジョブチェンジャー]";
+			mes "4次職へ転職ですね。";
+			next;
+			switch(job){
+			case Job_RuneKnight:		set '@tensei4,Job_DragonKnight;break;
+			case Job_ArchBishop:		set '@tensei4,Job_Cardinal;break;
+			case Job_Warlock:			set '@tensei4,Job_ArchMage;break;
+			case Job_Mechanic:			set '@tensei4,Job_Meister;break;
+			case Job_Ranger:			set '@tensei4,Job_WindHawk;break;
+			case Job_Guillotine:		set '@tensei4,Job_ShadowCross;break;
+			case Job_RoyalGuard:		set '@tensei4,Job_ImperialGuard;break;
+			case Job_Shura:				set '@tensei4,Job_Inquisitor;break;
+			case Job_Sorcerer:			set '@tensei4,Job_ElementalMaster;break;
+			case Job_ShadowChaser:		set '@tensei4,Job_AbyssChaser;break;
+			case Job_Genetic:			set '@tensei4,Job_Biolo;break;
+			case Job_Minstrel:			set '@tensei4,Job_Troubadour;break;
+			case Job_Wanderer:			set '@tensei4,Job_Trouvere;break;
+			}
+			GetJobName '@jobname4$,'@tensei4,0;
+			mes "[ジョブチェンジャー]";
+			mes "^0000FF" +'@jobname4$+ "^000000に転職しますか？";
+			if(select("転職する","やめる")==2) close;
+			setoption 0x0000;
+			jobchange '@tensei4,upper;
+		} else {
+			mes "[ジョブチェンジャー]";
+			mes "4次職に転職するためには";
+			mes "ベースレベルが"+'require_base_to4th+"";
+			mes "ジョブレベルが"+'require_job_to4th+"";
+			mes "必要になります。";
+		}
+		return;
+	}
+
+	//JobChangeToSH
+	//スピリットハンドラー転職
+	function JobChangeToSH {
+		if(BaseLevel >= 'require_base_toSH && JobLevel >= 'require_job_toSH ) {
+			mes "[ジョブチェンジャー]";
+			mes "スピリットハンドラーに転職ですね。";
+			mes "転職しますか？";
+			next;
+			if(select("転職する","やめる")==2) close;
+			jobchange Job_SpiritHandler,0;
+			emotion 21;
+			close;
+		} else {
+			mes "[ジョブチェンジャー]";
+			mes "スピリットハンドラーに転職するためには";
+			mes "ベースレベルが"+'require_base_toSH+"";
+			mes "ジョブレベルが"+'require_job_toSH+"";
+			mes "必要になります。";
+		}
+		return;
+	}
+	
+	// GetJobName(<VAL>,<CLASS>,<Trans_Flag>) : CLASSに対応する職業名をVALにセット
+	function GetJobName {
+		switch(getarg(1)) {
+		case Job_Novice:
+			if(getarg(2)==1) set getarg(0),"ハイノービス";
+			else set getarg(0),"ノービス";
+			break;
+		case Job_Swordman:
+			if(getarg(2)==1) set getarg(0),"ハイソードマン";
+			else set getarg(0),"ソードマン";
+			break;
+		case Job_Magician:
+			if(getarg(2)==1) set getarg(0),"ハイマジシャン";
+			else set getarg(0),"マジシャン";
+			break;
+		case Job_Archer:
+			if(getarg(2)==1) set getarg(0),"ハイアーチャー";
+			else set getarg(0),"アーチャー";
+			break;
+		case Job_Acolyte:
+			if(getarg(2)==1) set getarg(0),"ハイアコライト";
+			else set getarg(0),"アコライト";
+			break;
+		case Job_Merchant:
+			if(getarg(2)==1) set getarg(0),"ハイマーチャント";
+			else set getarg(0),"マーチャント";
+			break;
+		case Job_Thief:
+			if(getarg(2)==1) set getarg(0),"ハイシーフ";
+			else set getarg(0),"シーフ";
+			break;
+		case Job_Knight:
+			if(getarg(2)==1) set getarg(0),"ロードナイト";
+			else set getarg(0),"ナイト";
+			break;
+		case Job_Priest:
+			if(getarg(2)==1) set getarg(0),"ハイプリースト";
+			else set getarg(0),"プリースト";
+			break;
+		case Job_Wizard:
+			if(getarg(2)==1) set getarg(0),"ハイウィザード";
+			else set getarg(0),"ウィザード";
+			break;
+		case Job_Blacksmith:
+			if(getarg(2)==1) set getarg(0),"ホワイトスミス";
+			else set getarg(0),"ブラックスミス";
+			break;
+		case Job_Hunter:
+			if(getarg(2)==1) set getarg(0),"スナイパー";
+			else set getarg(0),"ハンター";
+			break;
+		case Job_Assassin:
+			if(getarg(2)==1) set getarg(0),"アサシンクロス";
+			else set getarg(0),"アサシン";
+			break;
+		case Job_Crusader:
+			if(getarg(2)==1) set getarg(0),"パラディン";
+			else set getarg(0),"クルセイダー";
+			break;
+		case Job_Monk:
+			if(getarg(2)==1) set getarg(0),"チャンピオン";
+			else set getarg(0),"モンク";
+			break;
+		case Job_Sage:
+			if(getarg(2)==1) set getarg(0),"プロフェッサー";
+			else set getarg(0),"セージ";
+			break;
+		case Job_Rogue:
+			if(getarg(2)==1) set getarg(0),"チェイサー";
+			else set getarg(0),"ローグ";
+			break;
+		case Job_Alchemist:
+			if(getarg(2)==1) set getarg(0),"クリエイター";
+			else set getarg(0),"アルケミスト";
+			break;
+		case Job_Bard:
+			if(getarg(2)==1) set getarg(0),"クラウン";
+			else set getarg(0),"バード";
+			break;
+		case Job_Dancer:
+			if(getarg(2)==1) set getarg(0),"ジプシー";
+			else set getarg(0),"ダンサー";
+			break;
+		case Job_SuperNovice:
+			set getarg(0),"スーパーノービス";
+			break;
+		case Job_TaeKwon:
+			set getarg(0),"テコンキッド";
+			break;
+		case Job_StarGladiator:
+			set getarg(0),"拳聖";
+			break;
+		case Job_SoulLinker:
+			set getarg(0),"ソウルリンカー";
+			break;
+		case Job_Gunslinger:
+			set getarg(0),"ガンスリンガー";
+			break;
+		case Job_Ninja:
+			set getarg(0),"忍者";
+			break;
+		case Job_RuneKnight:
+			set getarg(0),"ルーンナイト";
+			break;
+		case Job_ArchBishop:
+			set getarg(0),"アークビショップ";
+			break;
+		case Job_Warlock:
+			set getarg(0),"ウォーロック";
+			break;
+		case Job_Mechanic:
+			set getarg(0),"メカニック";
+			break;
+		case Job_Ranger:
+			set getarg(0),"レンジャー";
+			break;
+		case Job_Guillotine:
+			set getarg(0),"ギロチンクロス";
+			break;
+		case Job_RoyalGuard:
+			set getarg(0),"ロイヤルガード";
+			break;
+		case Job_Shura:
+			set getarg(0),"修羅";
+			break;
+		case Job_Sorcerer:
+			set getarg(0),"ソーサラー";
+			break;
+		case Job_ShadowChaser:
+			set getarg(0),"シャドウチェイサー";
+			break;
+		case Job_Genetic:
+			set getarg(0),"ジェネティック";
+			break;
+		case Job_Minstrel:
+			set getarg(0),"ミンストレル";
+			break;
+		case Job_Wanderer:
+			set getarg(0),"ワンダラー";
+			break;
+		case Job_ExpandedSuperNovice:
+			set getarg(0),"拡張スーパーノービス";
+			break;
+		case Job_Kagerou:
+			set getarg(0),"影狼";
+			break;
+		case Job_Oboro:
+			set getarg(0),"朧";
+			break;
+		case Job_Rebellion:
+			set getarg(0),"リベリオン";
+			break;
+		case Job_StarEmperor:
+			set getarg(0),"星帝";
+			break;
+		case Job_SoulReaper:
+			set getarg(0),"ソウルリーパー";
+			break;
+		case Job_DragonKnight:
+			set getarg(0),"ドラゴンナイト";
+			break;
+		case Job_Meister:
+			set getarg(0),"マイスター";
+			break;
+		case Job_ShadowCross:
+			set getarg(0),"シャドウクロス";
+			break;
+		case Job_ArchMage:
+			set getarg(0),"アークメイジ";
+			break;
+		case Job_Cardinal:
+			set getarg(0),"カーディナル";
+			break;
+		case Job_WindHawk:
+			set getarg(0),"ウィンドホーク";
+			break;
+		case Job_ImperialGuard:
+			set getarg(0),"インペリアルガード";
+			break;
+		case Job_Biolo:
+			set getarg(0),"バイオロ";
+			break;
+		case Job_AbyssChaser:
+			set getarg(0),"アビスチェイサー";
+			break;
+		case Job_ElementalMaster:
+			set getarg(0),"エレメンタルマスター";
+			break;
+		case Job_Inquisitor:
+			set getarg(0),"インクイジター";
+			break;
+		case Job_Troubadour:
+			set getarg(0),"トルバドゥール";
+			break;
+		case Job_Trouvere:
+			set getarg(0),"トルヴェール";
+			break;
+		case Job_SkyEmperor:
+			set getarg(0),"天帝";
+			break;
+		case Job_SoulAscetic:
+			set getarg(0),"ソウルアセティック";
+			break;
+		case Job_Shinkiro:
+			set getarg(0),"蜃気楼";
+			break;
+		case Job_Shiranui:
+			set getarg(0),"不知火";
+			break;
+		case Job_NightWatch:
+			set getarg(0),"ナイトウォッチ";
+			break;
+		case Job_HyperNovice:
+			set getarg(0),"ハイパーノービス";
+			break;
+		}
+		return;
+	}
+}
+
+prontera.gat,152,193,5	duplicate(ジョブチェンジャー)	ジョブチェンジャー	811

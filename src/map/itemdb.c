@@ -48,6 +48,12 @@ static struct randopt_item_data randopt_item[MAX_RANDOPT_ENTRY];
 
 static int randopt_count;
 
+static struct barter_item_data barter_item[MAX_BARTER_ENTRY];
+static struct barter_item_data expbarter_item[MAX_EXPBARTER_ENTRY];
+
+static int barter_count;
+static int expbarter_count;
+
 /*==========================================
  * 名前で検索
  *------------------------------------------
@@ -158,6 +164,69 @@ struct randopt_item_data itemdb_randopt_data(int mobid, int nameid)
 	return ro;
 }
 
+/*==========================================
+ * れもん追加barter存在確認
+ *------------------------------------------
+ */
+int itemdb_barter_item(int barter_id)
+{
+	for (int i = 0; i < MAX_BARTER_ENTRY; i++) {
+		if (barter_item[i].barter_id == barter_id)
+			return 1;
+	}
+	return 0;
+}
+
+/*==========================================
+ * れもん追加expbarter存在確認
+ *------------------------------------------
+ */
+int itemdb_expbarter_item(int barter_id)
+{
+	for (int i = 0; i < MAX_EXPBARTER_ENTRY; i++) {
+		if (expbarter_item[i].barter[0].nameid > 0) { // 中身があれば
+			if (expbarter_item[i].barter_id == barter_id)
+				return 1;
+		}
+	}
+	return 0;
+}
+
+/*==========================================
+ * れもん追加barterdata検索
+ *------------------------------------------
+ */
+struct barter_item_data itemdb_barter_data(int barter_id)
+{
+	struct barter_item_data bi;
+
+	memset(&bi, 0, sizeof(bi));
+
+	for (int i = 0; i < MAX_BARTER_ENTRY; i++) {
+		if (barter_item[i].barter_id == barter_id)
+			return barter_item[i];
+	}
+	return bi;
+}
+
+/*==========================================
+ * れもん追加expbarterdata検索
+ *------------------------------------------
+ */
+struct barter_item_data itemdb_expbarter_data(int barter_id)
+{
+	struct barter_item_data bi;
+
+	memset(&bi, 0, sizeof(bi));
+
+	for (int i = 0; i < MAX_EXPBARTER_ENTRY; i++) {
+		if (expbarter_item[i].barter[0].nameid > 0) { // 中身があれば
+			if (expbarter_item[i].barter_id == barter_id)
+				return expbarter_item[i];
+		}
+	}
+	return bi;
+}
 /*==========================================
  * DBの存在確認
  *------------------------------------------
@@ -1167,6 +1236,19 @@ bool itemdb_insert_randoptdb(struct randopt_item_data ro)
 	printf("\rread db/item_randopt_db.lua done (count=%d)", randopt_count);
 	return true;
 }
+
+/*==========================================
+ * れもん追加barterDBの初期化
+ *------------------------------------------
+ */
+static void itemdb_init_barterdb(void)
+{
+	barter_count = 0;
+	memset(&randopt_item, 0, sizeof(randopt_item));
+	return;
+}
+
+
 
 /*==========================================
  * デバッガ

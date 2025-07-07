@@ -6992,42 +6992,109 @@ void clif_market_list(struct map_session_data *sd, struct npc_data *nd)
  * barter販売リスト	れもん追加
  *------------------------------------------
  */
-
 void clif_barter_list(struct map_session_data* sd, struct npc_data* nd)
 {
-#if PACKETVER >= 20190116
-	int i,fd;
-	int c = 0;
-	struct item_data *id;
+	///*
+	struct item_data* id;
+	int fd, i, j, k;
+	int count = 0;
+	int len = 8;
+
+	nullpo_retv(sd);
+	nullpo_retv(nd);
+
+	fd = sd->fd;
+	WFIFOW(fd, 0) = 0xb56;
+	for (i = 0; nd->u.shop_item[i].nameid; i++) {
+		if (nd->u.shop_item[i].nameid <= 0)
+			continue;
+		id = itemdb_search(nd->u.shop_item[i].nameid);
+		WFIFOL(fd, len) = nd->u.shop_item[i].nameid;    // nameid
+		WFIFOW(fd, len + 4) = id->type;        // type
+		WFIFOL(fd, len + 6) = nd->u.shop_item[i].qty;    // stock
+		WFIFOL(fd, len + 10) = id->weight;
+		WFIFOL(fd, len + 14) = i;            // index
+		WFIFOL(fd, len + 18) = nd->u.shop_item[i].value;            // zeny!!
+		for (j = 0; j < 5; j++) {
+			struct item_data* id2;
+			if (nd->u.shop_item[i].expbarter_item[j].nameid <= 0 || nd->u.shop_item[i].expbarter_item[j].amount <= 0)
+				continue;
+			id2 = itemdb_search(nd->u.shop_item[i].expbarter_item[j].nameid);
+			WFIFOL(fd, len + 26 + k * 12) = nd->u.shop_item[i].expbarter_item[j].nameid;    // itemid
+			WFIFOW(fd, len + 30 + k * 12) = nd->u.shop_item[i].expbarter_item[j].refine;    // refine
+			WFIFOL(fd, len + 32 + k * 12) = nd->u.shop_item[i].expbarter_item[j].amount;    // amount
+			WFIFOW(fd, len + 36 + k * 12) = id2->type;    // type
+			k++;
+		}
+		WFIFOL(fd, len + 22) = k;
+		len += 26 + k * 12;
+		count++;
+		k = 0;
+	}
+	WFIFOW(fd, 2) = len;
+	printf("-> size=%d\n", len);
+	WFIFOL(fd, 4) = count;
+	WFIFOSET(fd, WFIFOW(fd, 2));
+
+	return;
+	//*/
+	/*
+	int i,fd,c,x;
+	struct item_data* id;
 
 	nullpo_retv(sd);
 	nullpo_retv(nd);
 
 	fd = sd->fd;
 
-	WFIFOW(fd, 0) = 0x0b0e;  // パケットID
+	WFIFOW(fd, 0) = 0xb56;
 
+	int set = 8;
+
+	printf("NPC ID: %d\n", nd->bl.id);
 	for (i = 0; nd->u.shop_item[i].nameid > 0; i++) {
 		id = itemdb_search(nd->u.shop_item[i].nameid);
-		const int offset = 4 + c * 25;
 
-		WFIFOL(fd, offset + 0) = nd->u.shop_item[i].nameid;       // nameid（交換後にもらえる）
-		WFIFOB(fd, offset + 4) = id->type; // type
-		WFIFOL(fd, offset + 5) = nd->u.shop_item[i].qty;          // もらえる個数
+		int count = 0;
+		for (x = 0; x < 5; x++) {
+			if (nd->u.shop_item[i].expbarter_item[x].nameid > 0)
+				count++;
+		}
 
-		WFIFOL(fd, offset + 9) = nd->u.shop_item[i].value;       // 要求アイテムID
-		WFIFOL(fd, offset + 13) = nd->u.shop_item[i].value2;      // 要求個数
-
-		WFIFOL(fd, offset + 17) = id->weight;
-		WFIFOL(fd, offset + 21) = c;                  // index
-		WFIFOW(fd, offset + 25) = id->view_id;        // viewSprite（拡張想定で最後に詰め）
-
-		c++;
-}
-
-	WFIFOW(fd, 2) = 4 + c * 25;
+		WFIFOL(fd, set + 0) = nd->u.shop_item[i].nameid;
+		WFIFOW(fd, set + 4) = id->type;
+		WFIFOL(fd, set + 6) = nd->u.shop_item[i].qty;
+		WFIFOL(fd, set + 10) = id->weight;
+		WFIFOL(fd, set + 14) = i;
+		WFIFOL(fd, set + 18) = nd->u.shop_item[i].value;
+		WFIFOL(fd, set + 22) = count;
+		printf("-> [%d] nameid=%d qty=%d value=%d\n",
+			i, nd->u.shop_item[i].nameid, nd->u.shop_item[i].qty, nd->u.shop_item[i].value);
+		for (c = 0; c < count; c++) {
+			int cset = set + 26 + c * 12;
+			struct item_data* id2;
+			id2 = itemdb_search(nd->u.shop_item[i].expbarter_item[c].nameid);
+			WFIFOL(fd, cset + 0) = nd->u.shop_item[i].expbarter_item[c].nameid;
+			WFIFOW(fd, cset + 4) = nd->u.shop_item[i].expbarter_item[c].refine;
+			WFIFOL(fd, cset + 6) = nd->u.shop_item[i].expbarter_item[c].amount;
+			WFIFOW(fd, cset + 10) = id2->type;
+			printf("   -> cost[%d]: id=%d refine=%d amount=%d\n", c,
+				nd->u.shop_item[i].expbarter_item[c].nameid,
+				nd->u.shop_item[i].expbarter_item[c].refine,
+				nd->u.shop_item[i].expbarter_item[c].amount);
+		}
+		set += 26 + count * 12;
+		printf("> index=%d, count=%d, offset=%d\n", i, count, set);
+	}
+	printf("> items=%d, size=%d\n", i, set);
+	WFIFOW(fd, 2) = set;
+	printf("> items=%d, size=%d\n", i, WFIFOW(fd, 2));
+	printf("> npc_shopid=%d\n", sd->npc_shopid);
+	WFIFOW(fd, 4) = i;
 	WFIFOSET(fd, WFIFOW(fd, 2));
-#endif
+
+	return;
+	*/
 }
 
 
@@ -11942,15 +12009,6 @@ void clif_damage(struct block_list *src, struct block_list *dst, unsigned int ti
 	nullpo_retv(dst);
 
 	sc = status_get_sc(dst);
-	//れもん追加ダメージスケール表示
-	if (dst->type == BL_MOB) {
-		struct mob_data* md = (struct mob_data*)dst;
-		struct mobdb_data* mob_info = mobdb_search(md->class_);
-		if (mob_info && mob_info->dscale > 0) {
-			damage = (damage + (mob_info->dscale / 2)) / mob_info->dscale;
-			damage2 = (damage2 + (mob_info->dscale / 2)) / mob_info->dscale;
-		}
-	}
 
 	if(type != 4 && dst->type == BL_PC) {
 		if( ((struct map_session_data *)dst)->special_state.infinite_endure )
@@ -13223,14 +13281,6 @@ void clif_skill_damage(struct block_list *src,struct block_list *dst,
 	nullpo_retv(dst);
 
 	sc = status_get_sc(dst);
-	//れもん追加ダメージスケール表示
-	if (dst->type == BL_MOB) {
-		struct mob_data* md = (struct mob_data*)dst;
-		struct mobdb_data* mob_info = mobdb_search(md->class_);
-		if (mob_info && mob_info->dscale > 0) {
-			damage = (damage + (mob_info->dscale / 2)) / mob_info->dscale;
-		}
-	}
 
 	if(type != 5 && dst->type == BL_PC && ((struct map_session_data *)dst)->special_state.infinite_endure)
 		type = 9;
@@ -19184,7 +19234,7 @@ void clif_send_homstatus(struct map_session_data *sd, int flag)
 	WFIFOW(fd,71)=hd->status.skill_point;	// skill point
 	WFIFOW(fd,73)=hd->attackable;			// 攻撃可否フラグ 0:不可/1:許可
 	WFIFOSET(fd,packet_db[0x9f7].len);
-#else
+#elif PACKETVER < 20210303
 	WFIFOW(fd,0)=0x9f7;
 	memcpy(WFIFOP(fd,2),hd->status.name,24);
 	WFIFOB(fd,26)=(unit_isdead(&hd->bl))? 2: battle_config.homun_rename? 0: hd->status.rename_flag; // 名前付けたフラグ 1で変更不可 2は死亡状態
@@ -19209,6 +19259,30 @@ void clif_send_homstatus(struct map_session_data *sd, int flag)
 	WFIFOW(fd,73)=hd->status.skill_point;	// skill point
 	WFIFOW(fd,75)=hd->attackable;			// 攻撃可否フラグ 0:不可/1:許可
 	WFIFOSET(fd,packet_db[0x9f7].len);
+#else
+	WFIFOW(fd, 0) = 0xba4;
+	memcpy(WFIFOP(fd, 2), hd->status.name, 24);
+	WFIFOB(fd, 26) = (unit_isdead(&hd->bl)) ? 2 : battle_config.homun_rename ? 0 : hd->status.rename_flag; // 名前付けたフラグ 1で変更不可 2は死亡状態
+	WFIFOW(fd, 27) = hd->status.base_level;	// Lv
+	WFIFOW(fd, 29) = hd->status.hungry;		// 満腹度
+	WFIFOW(fd, 31) = hd->intimate / 100;	// 新密度
+	WFIFOW(fd, 33) = hd->atk;					// Atk
+	WFIFOW(fd, 35) = hd->matk;					// MAtk
+	WFIFOW(fd, 37) = hd->hit;					// Hit
+	WFIFOW(fd, 39) = hd->critical;				// Cri
+	WFIFOW(fd, 41) = hd->def;					// Def
+	WFIFOW(fd, 43) = hd->mdef;					// Mdef
+	WFIFOW(fd, 45) = hd->flee;					// Flee
+	WFIFOW(fd, 47) = (flag) ? 0 : status_get_amotion(&hd->bl);	// Aspd
+	WFIFOL(fd, 49) = hd->status.hp;			// HP
+	WFIFOL(fd, 53) = hd->max_hp;		// MHp
+	WFIFOL(fd, 57) = hd->status.sp;			// SP
+	WFIFOL(fd, 61) = hd->max_sp;		// MSP
+	WFIFOQ(fd, 65) = hd->status.base_exp;		// Exp
+	WFIFOQ(fd, 73) = homun_nextbaseexp(hd);	// NextExp
+	WFIFOW(fd, 81) = hd->status.skill_point;	// skill point
+	WFIFOW(fd, 83) = hd->attackable;			// 攻撃可否フラグ 0:不可/1:許可
+	WFIFOSET(fd, packet_db[0xba4].len);
 #endif
 
 	return;
@@ -23729,13 +23803,6 @@ static void clif_parse_NpcPointShopClose(int fd,struct map_session_data *sd, int
  *
  *------------------------------------------
  */
-static void clif_parse_BarterClose(int fd, struct map_session_data* sd, int cmd)
-{
-	nullpo_retv(sd);
-
-	sd->npc_shopid = 0;
-	return;
-}
 
 /*==========================================
  *
@@ -27522,6 +27589,7 @@ static void clif_parse_SellMarketReq(int fd,struct map_session_data *sd, int cmd
 
 	nullpo_retv(sd);
 
+	printf("clif_parse_market\n");
 	// 死んでいたり、赤エモの時はNPCをクリックできない
 	if(unit_isdead(&sd->bl)) {
 		clif_clearchar_area(&sd->bl,1);
@@ -27597,6 +27665,88 @@ static void clif_parse_CloseMarketReq(int fd,struct map_session_data *sd, int cm
 	nullpo_retv(sd);
 
 	sd->npc_shopid = 0;
+	return;
+}
+/**/
+
+static void clif_parse_buybarter(int fd, struct map_session_data* sd, int cmd)
+{
+	int i, count;
+	int size = 12;
+	nullpo_retv(sd);
+
+	printf("clif_parse_buybarter\n");
+
+	// 死んでいたり、赤エモの時はNPCをクリックできない
+	if (unit_isdead(&sd->bl)) {
+		clif_clearchar_area(&sd->bl, 1);
+		return;
+	}
+	if (sd->sc.data[SC_SUHIDE].timer != -1)
+		return;
+	if (sd->npc_id != 0 || sd->state.store || sd->state.deal_mode != 0 || sd->status.manner < 0 || sd->state.mail_appending)
+		return;
+
+	count = (RFIFOW(fd, GETPACKETPOS(cmd, 0)) - 4) / size;
+	if (count <= 0 || count > MAX_INVENTORY)
+		return;
+
+	struct add_barter_item* list = calloc(count, sizeof(struct add_barter_item));
+	if (!list)
+		return;
+
+
+	for (i = 0; i < count; i++) {
+		int pos = GETPACKETPOS(cmd, 1) + (i * size);
+		list[i].addnameid = RFIFOL(fd, pos);
+		list[i].shopindex = RFIFOL(fd, pos + 4);
+		list[i].addamount = RFIFOL(fd, pos + 8);
+		list[i].removeindex = -1;
+		printf("^ -> nameid%d, index%d, amount%d,\n", RFIFOL(fd, pos), RFIFOL(fd, pos + 4), RFIFOL(fd, pos + 8));
+	}
+
+
+	// 交換処理に丸投げ
+	int result = npc_expanded_barter_buylist(sd, count, list);
+
+
+	free(list);
+
+	WFIFOW(fd, 0) = 0xca;
+	WFIFOB(fd, 2) = result; // 0: The deal has successfully completed., 1: You dont have enough zeny., 2: you are overcharged!, 3: You are over your weight limit.
+	WFIFOSET(fd, packet_db[0xca].len);
+
+	sd->npc_shopid = 0;
+
+	return;
+}
+
+/*==========================================
+ *
+ *------------------------------------------
+ */
+static void clif_parse_BarterClose(int fd, struct map_session_data* sd, int cmd)
+{
+	nullpo_retv(sd);
+	printf("clif_parse_BarterClose\n");
+	sd->npc_shopid = 0;
+	return;
+}
+
+/*==========================================
+ *npc_buy_result
+ *------------------------------------------
+ */
+static void clif_npc_buy_result(struct map_session_data* sd, int result)
+{
+	int fd;
+
+	nullpo_retv(sd);
+
+	fd = sd->fd;
+	WFIFOW(fd, 0) = 0xca;
+	WFIFOB(fd, 2) = result; // 0: The deal has successfully completed., 1: You dont have enough zeny., 2: you are overcharged!, 3: You are over your weight limit.
+	WFIFOSET(fd, packet_db[0xca].len);
 	return;
 }
 
@@ -28411,7 +28561,6 @@ static int packetdb_readdb_sub(char *line, int ln)
 		{ clif_parse_NpcSellListSend,             "npcselllistsend"           },
 		{ clif_parse_NpcPointShopOpen,            "npcpointshopopen"          },
 		{ clif_parse_NpcPointShopClose,           "npcpointshopclose"         },
-		{ clif_parse_BarterClose,				  "barterclose"				  },
 		{ clif_parse_NpcPointShopItemList,        "npcpointshopitemlist"      },
 		{ clif_parse_NpcPointShopBuy,             "npcpointshopbuy"           },
 		{ clif_parse_CreateChatRoom,              "createchatroom"            },
@@ -28587,6 +28736,8 @@ static int packetdb_readdb_sub(char *line, int ln)
 		{ clif_parse_BankingInfoReq,              "bankinforeq"               },
 		{ clif_parse_SellMarketReq,               "sellmarketreq"             },
 		{ clif_parse_CloseMarketReq,              "closemarketreq"            },
+		{ clif_parse_buybarter,					  "buybarter"				  },
+		{ clif_parse_BarterClose,				  "barterclose"				  },
 		{ clif_parse_ClientTimeStamp,             "clienttimestamp"           },
 		{ clif_parse_OpenRoDEX,                   "openrodex"                 },
 		{ clif_parse_CloseRoDEX,                  "closerodex"                },

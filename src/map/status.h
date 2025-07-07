@@ -2687,6 +2687,21 @@ enum {
 	HAT_EF_C_CLB_SS_LL,
 	HAT_EF_Vacation,
 	HAT_EF_C_FH_Lostwing,
+	FOOTPRINT_EF_DogFoot,
+	HAT_EF_C_Auspicloud,
+	HAT_EF_AURA_OF_GHOST_S,
+	HAT_EF_C_ROS2024_Wing_1,
+	FOOTPRINT_EF_dumpling,
+	FOOTPRINT_EF_panda_basic,
+	FOOTPRINT_EF_panda_color,
+	HAT_EF_Atque_Poenitentia,
+	HAT_EF_Perm_Frost_Oblivion,
+	HAT_EF_Atque_Poenitentia2,
+	HAT_EF_GUIDE_OF_DEAD_TEXT,
+	HAT_EF_MEDJED_TEXT,
+	HAT_EF_InkPainting_Day,
+	HAT_EF_InkPainting_Night,
+	HAT_EF_Kung_Fu_Panda,
 	HAT_EF_MAX
 };
 

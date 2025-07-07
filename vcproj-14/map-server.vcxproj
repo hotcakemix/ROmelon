@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\map\setbonus.h" />
     <ClInclude Include="..\src\map\sql\mapreg_sql.h" />
     <ClInclude Include="..\src\map\achieve.h" />
     <ClInclude Include="..\src\map\atcommand.h" />
@@ -206,6 +207,7 @@
     <ClInclude Include="..\src\common\zlib\zlib.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\map\setbonus.c" />
     <ClCompile Include="..\src\map\sql\mapreg_sql.c" />
     <ClCompile Include="..\src\map\achieve.c" />
     <ClCompile Include="..\src\map\atcommand.c" />

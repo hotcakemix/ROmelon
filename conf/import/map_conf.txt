@@ -24,8 +24,6 @@ map: 1@slug.gat
 
 
 
-map: jro22ani1.gat
-
 //神殿？MAP　使いたい
 map: 1@adv.gat
 map: 1@pda.gat
@@ -67,7 +65,7 @@ map: prt_prison.gat
 map: que_sign01.gat
 map: turbo_room.gat
 map: x_prt_evt.gat
-
+map: jro22ani1.gat
 
 //できれば街に
 map: t_garden.gat
@@ -76,3 +74,16 @@ map: rag_fes.gat
 map: pronterar.gat
 map: pronterar.gat
 map: memohall.gat
+
+map: hero_tra.gat
+
+map: prt_mk.gat
+
+
+
+map: jro_kuma.gat
+
+
+map: wnb_b_01.gat
+
+map: ori0001.gat

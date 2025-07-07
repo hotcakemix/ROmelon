@@ -189,6 +189,9 @@
     </ClCompile>
     <ClCompile Include="..\src\map\achieve.c" />
     <ClCompile Include="..\src\map\luascript.c" />
+    <ClCompile Include="..\src\map\setbonus.c">
+      <Filter>map_sql</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\map\sql\mapreg_sql.h">
@@ -385,6 +388,9 @@
     </ClInclude>
     <ClInclude Include="..\src\map\achieve.h" />
     <ClInclude Include="..\src\map\luascript.h" />
+    <ClInclude Include="..\src\map\setbonus.h">
+      <Filter>map_sql</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">

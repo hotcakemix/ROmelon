@@ -53,6 +53,8 @@
 #include "bonus.h"
 #include "date.h"
 
+#include "setbonus.h"
+
 static int atkmods[MAX_SIZE_FIX][WT_MAX];	// 武器ATKサイズ修正(size_fix.txt)
 
 static struct refine_db {
@@ -913,6 +915,8 @@ L_RECALC:
 		}
 	}
 
+	pc_calc_setbonuses(sd);
+
 	if(sd->equip_index[EQUIP_INDEX_ARROW] >= 0) { // 矢
 		idx = sd->equip_index[EQUIP_INDEX_ARROW];
 		if(sd->inventory_data[idx]) {		// まだ属性が入っていない
@@ -1665,60 +1669,60 @@ L_RECALC:
 
 	sd->hit      += 175 + sd->paramc[4] + sd->paramc[5]/3 + sd->paramc[10]*2 + sd->status.base_level;
 	sd->flee     += 100 + sd->paramc[1] + sd->paramc[5]/5 + sd->paramc[10]*2 + sd->status.base_level;
-	sd->def2     += (int)(sd->paramc[2]/2. + sd->status.base_level/2. + sd->paramc[1]/5.);
-	sd->mdef2    += (int)(sd->paramc[3] + sd->status.base_level/4. + sd->paramc[2]/5. + sd->paramc[4]/5.);
-	if(pc_isdoram(sd))
-		sd->flee2    += sd->paramc[5] * 120 / 100 + 10;
+	sd->def2 += (int)(sd->paramc[2] / 2. + sd->status.base_level / 2. + sd->paramc[1] / 5.);
+	sd->mdef2 += (int)(sd->paramc[3] + sd->status.base_level / 4. + sd->paramc[2] / 5. + sd->paramc[4] / 5.);
+	if (pc_isdoram(sd))
+		sd->flee2 += sd->paramc[5] * 120 / 100 + 10;
 	else
-		sd->flee2    += sd->paramc[5] + 10;
+		sd->flee2 += sd->paramc[5] + 10;
 	sd->critical += sd->paramc[5] / 3 * 10 + 10;
 #endif
-	sd->patk     += sd->paramc[6]/3 + sd->paramc[10]/5;
-	sd->smatk    += sd->paramc[9]/3 + sd->paramc[10]/5;
-	sd->res      += sd->paramc[7] + (sd->paramc[7]/3*5);
-	sd->mres     += sd->paramc[8] + (sd->paramc[8]/3*5);
-	sd->hplus    += sd->paramc[11];
-	sd->crate    += sd->paramc[11]/3;
+	sd->patk += sd->paramc[6] / 3 + sd->paramc[10] / 5;
+	sd->smatk += sd->paramc[9] / 3 + sd->paramc[10] / 5;
+	sd->res += sd->paramc[7] + (sd->paramc[7] / 3 * 5);
+	sd->mres += sd->paramc[8] + (sd->paramc[8] / 3 * 5);
+	sd->hplus += sd->paramc[11];
+	sd->crate += sd->paramc[11] / 3;
 
 	// アイテム補正
-	if(sd->sc.count > 0) {
-		if(sd->sc.data[SC_MEAL_INCATK].timer != -1)
+	if (sd->sc.count > 0) {
+		if (sd->sc.data[SC_MEAL_INCATK].timer != -1)
 			sd->base_atk += sd->sc.data[SC_MEAL_INCATK].val1;
-		if(sd->sc.data[SC_MEAL_INCMATK].timer != -1) {
+		if (sd->sc.data[SC_MEAL_INCMATK].timer != -1) {
 			sd->matk1 += sd->sc.data[SC_MEAL_INCMATK].val1;
 			sd->matk2 += sd->sc.data[SC_MEAL_INCMATK].val1;
 		}
-		if(sd->sc.data[SC_MEAL_INCHIT].timer != -1)
+		if (sd->sc.data[SC_MEAL_INCHIT].timer != -1)
 			sd->hit += sd->sc.data[SC_MEAL_INCHIT].val1;
-		if(sd->sc.data[SC_MEAL_INCFLEE].timer != -1)
+		if (sd->sc.data[SC_MEAL_INCFLEE].timer != -1)
 			sd->flee += sd->sc.data[SC_MEAL_INCFLEE].val1;
-		if(sd->sc.data[SC_MEAL_INCFLEE2].timer != -1)
+		if (sd->sc.data[SC_MEAL_INCFLEE2].timer != -1)
 			sd->flee2 += sd->sc.data[SC_MEAL_INCFLEE2].val1;
-		if(sd->sc.data[SC_MEAL_INCCRITICAL].timer != -1)
-			sd->critical += sd->sc.data[SC_MEAL_INCCRITICAL].val1*10;
-		if(sd->sc.data[SC_MEAL_INCDEF].timer != -1)
+		if (sd->sc.data[SC_MEAL_INCCRITICAL].timer != -1)
+			sd->critical += sd->sc.data[SC_MEAL_INCCRITICAL].val1 * 10;
+		if (sd->sc.data[SC_MEAL_INCDEF].timer != -1)
 			sd->def += sd->sc.data[SC_MEAL_INCDEF].val1;
-		if(sd->sc.data[SC_MEAL_INCMDEF].timer != -1)
+		if (sd->sc.data[SC_MEAL_INCMDEF].timer != -1)
 			sd->mdef += sd->sc.data[SC_MEAL_INCMDEF].val1;
-		if(sd->sc.data[SC_MONSTER_TRANSFORM].timer != -1 && sd->sc.data[SC_MONSTER_TRANSFORM].val1 == 1109)
+		if (sd->sc.data[SC_MONSTER_TRANSFORM].timer != -1 && sd->sc.data[SC_MONSTER_TRANSFORM].val1 == 1109)
 			sd->hit += 5;
 	}
 
-	if(sd->sc.data[SC_MADNESSCANCEL].timer != -1) {	// マッドネスキャンセラー
+	if (sd->sc.data[SC_MADNESSCANCEL].timer != -1) {	// マッドネスキャンセラー
 		sd->base_atk += 100;
 	}
-	if(sd->sc.data[SC_GATLINGFEVER].timer != -1) {	// ガトリングフィーバー
-		sd->base_atk += 20+(sd->sc.data[SC_GATLINGFEVER].val1*10);
+	if (sd->sc.data[SC_GATLINGFEVER].timer != -1) {	// ガトリングフィーバー
+		sd->base_atk += 20 + (sd->sc.data[SC_GATLINGFEVER].val1 * 10);
 	}
-	if(sd->sc.data[SC_VOLCANO].timer != -1
+	if (sd->sc.data[SC_VOLCANO].timer != -1
 #ifdef PRE_RENEWAL
 		&& sd->def_ele == ELE_FIRE
 #endif
-	) {	// ボルケーノ
+		) {	// ボルケーノ
 		sd->base_atk += sd->sc.data[SC_VOLCANO].val3;
 	}
 #ifdef PRE_RENEWAL
-	if(sd->sc.data[SC_DRUMBATTLE].timer != -1) {	// 戦太鼓の響き
+	if (sd->sc.data[SC_DRUMBATTLE].timer != -1) {	// 戦太鼓の響き
 		sd->base_atk += sd->sc.data[SC_DRUMBATTLE].val2;
 		//idx = sd->equip_index[EQUIP_INDEX_LARM];
 		// 左手には適用しない
@@ -1727,37 +1731,38 @@ L_RECALC:
 	}
 #endif
 
-	if(sd->base_atk < 1)
+	if (sd->base_atk < 1)
 		sd->base_atk = 1;
-	if(sd->critical_rate != 100)
-		sd->critical = (sd->critical*sd->critical_rate)/100;
-	if(sd->critical < 10)
+	if (sd->critical_rate != 100)
+		sd->critical = (sd->critical * sd->critical_rate) / 100;
+	if (sd->critical < 10)
 		sd->critical = 10;
-	if(sd->hit_rate != 100)
-		sd->hit = (sd->hit*sd->hit_rate)/100;
-	if(sd->hit < 1) sd->hit = 1;
-	if(sd->flee_rate != 100)
-		sd->flee = (sd->flee*sd->flee_rate)/100;
-	if(sd->flee < 1) sd->flee = 1;
-	if(sd->flee2_rate != 100)
-		sd->flee2 = (sd->flee2*sd->flee2_rate)/100;
-	if(sd->flee2 < 10) sd->flee2 = 10;
-	if(sd->def_rate != 100)
-		sd->def = (sd->def*sd->def_rate)/100;
-	if(sd->def2_rate != 100)
-		sd->def2 = (sd->def2*sd->def2_rate)/100;
-	if(sd->def2 < 1) sd->def2 = 1;
-	if(sd->mdef_rate != 100)
-		sd->mdef = (sd->mdef*sd->mdef_rate)/100;
-	if(sd->mdef2_rate != 100)
-		sd->mdef2 = (sd->mdef2*sd->mdef2_rate)/100;
-	if(sd->mdef2 < 1) sd->mdef2 = 1;
+	if (sd->hit_rate != 100)
+		sd->hit = (sd->hit * sd->hit_rate) / 100;
+	if (sd->hit < 1) sd->hit = 1;
+	if (sd->flee_rate != 100)
+		sd->flee = (sd->flee * sd->flee_rate) / 100;
+	if (sd->flee < 1) sd->flee = 1;
+	if (sd->flee2_rate != 100)
+		sd->flee2 = (sd->flee2 * sd->flee2_rate) / 100;
+	if (sd->flee2 < 10) sd->flee2 = 10;
+	if (sd->def_rate != 100)
+		sd->def = (sd->def * sd->def_rate) / 100;
+	if (sd->def2_rate != 100)
+		sd->def2 = (sd->def2 * sd->def2_rate) / 100;
+	if (sd->def2 < 1) sd->def2 = 1;
+	if (sd->mdef_rate != 100)
+		sd->mdef = (sd->mdef * sd->mdef_rate) / 100;
+	if (sd->mdef2_rate != 100)
+		sd->mdef2 = (sd->mdef2 * sd->mdef2_rate) / 100;
+	if (sd->mdef2 < 1) sd->mdef2 = 1;
 
 	// シングルアクション
-	if(sd->status.weapon >= WT_HANDGUN && sd->status.weapon <= WT_GRENADE && (skill = pc_checkskill(sd,GS_SINGLEACTION)) > 0)
+	if (sd->status.weapon >= WT_HANDGUN && sd->status.weapon <= WT_GRENADE && (skill = pc_checkskill(sd, GS_SINGLEACTION)) > 0)
 	{
-		sd->hit += skill*2;
+		sd->hit += skill * 2;
 	}
+
 	// 太陽と月と星の悪魔
 	if((skill = pc_checkskill(sd,SG_DEVIL)) > 0 && sd->status.job_level >= 50)
 	{
@@ -3219,15 +3224,15 @@ L_RECALC:
 			sd->smatk += sd->sc.data[SC_TALISMAN_OF_MAGICIAN].val2;
 		}
 		// 五行符
-		if(sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].timer != -1) {
-			sd->addele[ELE_FIRE]  += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->addele[ELE_WATER] += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->addele[ELE_WIND]  += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->addele[ELE_EARTH] += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->magic_addele[ELE_FIRE]  += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->magic_addele[ELE_WATER] += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->magic_addele[ELE_WIND]  += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
-			sd->magic_addele[ELE_EARTH] += sd->sc.data[SOA_TALISMAN_OF_FIVE_ELEMENTS].val2;
+		if(sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].timer != -1) {
+			sd->addele[ELE_FIRE]  += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->addele[ELE_WATER] += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->addele[ELE_WIND]  += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->addele[ELE_EARTH] += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->magic_addele[ELE_FIRE]  += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->magic_addele[ELE_WATER] += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->magic_addele[ELE_WIND]  += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
+			sd->magic_addele[ELE_EARTH] += sd->sc.data[SC_TALISMAN_OF_FIVE_ELEMENTS].val2;
 		}
 		// 四方五行陣
 		if(sd->sc.data[SC_T_FIVETH_GOD].timer != -1) {
@@ -9919,7 +9924,7 @@ int status_change_start(struct block_list *bl,int type,int val1,int val2,int val
 			tick = 1000;
 			break;
 		case SC_SPELLFIST:		/* スペルフィスト */
-			val4 = val1 * 7;	// 回数
+			val4 = val1 * 10;	// 回数
 			break;
 		case SC_STRIKING:			/* ストライキング */
 			val2 = tick / 1000;
@@ -10811,7 +10816,7 @@ int status_change_start(struct block_list *bl,int type,int val1,int val2,int val
 			val2 = val1 * 2;		// S.Matk増加値
 			calc_flag = 1;
 			break;
-		case SOA_TALISMAN_OF_FIVE_ELEMENTS:	/* 五行符 */
+		case SC_TALISMAN_OF_FIVE_ELEMENTS:	/* 五行符 */
 			val2 = val1 * 2;		// 属性モンスターダメージ増加率
 			calc_flag = 1;
 			break;
@@ -11562,7 +11567,7 @@ int status_change_end(struct block_list* bl, int type, int tid)
 		case SC_HIDDEN_CARD:		/* ヒドゥンカード */
 		case SC_TALISMAN_OF_WARRIOR:	/* 武士符 */
 		case SC_TALISMAN_OF_MAGICIAN:	/* 法師符 */
-		case SOA_TALISMAN_OF_FIVE_ELEMENTS:	/* 五行符 */
+		case SC_TALISMAN_OF_FIVE_ELEMENTS:	/* 五行符 */
 		case SC_T_FIVETH_GOD:		/* 四方五行陣 */
 		case SC_HEAVEN_AND_EARTH:	/* 天地神霊 */
 		case SC_MARINE_FESTIVAL:	/* マリンフェスティバル */

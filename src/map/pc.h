@@ -153,6 +153,9 @@ void pc_unequipitem(struct map_session_data*, int n, int type);
 int pc_equippeditem(struct map_session_data *sd,int id);
 void pc_useitem(struct map_session_data*, int n);
 
+//int pc_equippedmatchcount(struct map_session_data* sd, const int *id_list, bool* slot_used);		//‚ê‚à‚ñ’Ç‰Á‘•”õ‡’v”
+//bool pc_isequipped(struct map_session_data* sd, int nameid);					//‚ê‚à‚ñ’Ç‰Á‘•”õ‡’v
+
 int pc_damage(struct block_list *,struct map_session_data*,int);
 int pc_heal(struct map_session_data *,int,int,int,int);
 int pc_itemheal(struct map_session_data *sd,int hp,int sp);

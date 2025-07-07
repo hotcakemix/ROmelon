@@ -2458,7 +2458,6 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			calc_flag.hitrate = 1000000;
 			if(src_sd && src_sd->arrow_ele > ELE_NEUTRAL)	// 属性矢なら属性を矢の属性に変更
 				s_ele = src_sd->arrow_ele;
-			break;
 		case SC_FATALMENACE:	// フェイタルメナス
 			if(skill_lv > 5)
 				calc_flag.hitrate += (skill_lv - 6) * 5;
@@ -2910,22 +2909,41 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			int s_group = status_get_group(src);
 			int ele_type= status_get_elem_type(src);
 			cardfix = 100;
-			if (s_ele == ELE_NONE)
-				cardfix = cardfix*(100-target_sd->subele[ELE_NEUTRAL])/100;	// 属性無しの耐性は無属性
-			else
-				cardfix = cardfix*(100-target_sd->subele[s_ele])/100;		// 属性によるダメージ耐性
-			if (ele_type == ELE_NONE)
-				cardfix = cardfix*(100-target_sd->def_eleenemy[ELE_NEUTRAL])/100;	// 属性無しの耐性は無属性
-			else
-				cardfix = cardfix*(100-target_sd->def_eleenemy[ele_type])/100;		// 敵属性によるダメージ耐性
+			if (s_ele == ELE_NONE) {
+				cardfix = cardfix * (100 - target_sd->subele[ELE_NEUTRAL]) / 100;	// 属性無しの耐性は無属性
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
+			} else {
+				cardfix = cardfix * (100 - target_sd->subele[s_ele]) / 100;		// 属性によるダメージ耐性
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
+			}
+			if (ele_type == ELE_NONE) {
+				cardfix = cardfix * (100 - target_sd->def_eleenemy[ELE_NEUTRAL]) / 100;	// 属性無しの耐性は無属性
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
+			} else {
+				cardfix = cardfix * (100 - target_sd->def_eleenemy[ele_type]) / 100;		// 敵属性によるダメージ耐性
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
+			}
 			cardfix = cardfix*(100-target_sd->subenemy[s_enemy])/100;		// 敵タイプによるダメージ耐性
+			if (cardfix < 5)
+				cardfix = 5;  // れもん追加最大95%までしかカットさせない
 			cardfix = cardfix*(100-target_sd->subsize[s_size])/100;			// サイズによるダメージ耐性
+			if (cardfix < 5)
+				cardfix = 5;  // れもん追加最大95%までしかカットさせない
 			cardfix = cardfix*(100-target_sd->subgroup[s_group])/100;		// グループによるダメージ耐性
 
-			if(status_get_mode(src) & MD_BOSS)
-				cardfix = cardfix*(100-target_sd->subrace[RCT_BOSS])/100;	// ボスからの攻撃はダメージ減少
-			else
-				cardfix = cardfix*(100-target_sd->subrace[RCT_NONBOSS])/100;	// ボス以外からの攻撃はダメージ減少
+			if (status_get_mode(src) & MD_BOSS) {
+				cardfix = cardfix * (100 - target_sd->subrace[RCT_BOSS]) / 100;	// ボスからの攻撃はダメージ減少
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
+			} else {
+				cardfix = cardfix * (100 - target_sd->subrace[RCT_NONBOSS]) / 100;	// ボス以外からの攻撃はダメージ減少
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
+			}
 
 			// 特定Class用補正処理左手(少女の日記→ボンゴン用？)
 			for(i=0; i<target_sd->add_def_class_count; i++) {
@@ -2936,6 +2954,8 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			}
 			if(wd.flag&BF_LONG && !(src_md && (skill_num == AC_SHOWER || skill_num == SN_SHARPSHOOTING)) )
 				cardfix = cardfix*(100-target_sd->long_attack_def_rate)/100;	// 遠距離攻撃はダメージ減少(ホルンCとか)
+			if (cardfix < 5)
+				cardfix = 5;  // れもん追加最大95%までしかカットさせない
 			if(wd.flag&BF_SHORT)
 				cardfix = cardfix*(100-target_sd->near_attack_def_rate)/100;	// 近距離攻撃はダメージ減少(該当無し？)
 			DMG_FIX( cardfix, 100 );	// カード補正によるダメージ減少
@@ -3166,6 +3186,8 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 				cardfix = cardfix*(100-target_sd->subrace[s_race]-t_sc->data[SC_ANTI_M_BLAST].val2)/100;			// 種族によるダメージ耐性
 			else
 				cardfix = cardfix*(100-target_sd->subrace[s_race])/100;			// 種族によるダメージ耐性
+				if (cardfix < 5)
+					cardfix = 5;  // れもん追加最大95%までしかカットさせない
 			DMG_FIX( cardfix, 100 );	// カード補正によるダメージ減少
 		}
 
@@ -3367,7 +3389,16 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 				DMG_ADD( src_sd->arrow_atk );
 			}
 			DMG_FIX( (300 + (400 - 50 * t_size) * skill_lv) * status_get_lv(src) / 120, 100 );
-			if(sc && sc->data[SC_ABR_DUAL_CANNON].timer != -1) {
+			if (sc && sc->data[SC_ABR_DUAL_CANNON].timer != -1) {
+				wd.div_ = 2;
+			}
+			break;
+		case GN_CARTCANNON:		// カートキャノン
+			if (src_sd && src_sd->arrow_atk) {
+				DMG_ADD(src_sd->arrow_atk);
+			}
+			DMG_FIX(60 * skill_lv + (((src_sd) ? pc_checkskill(src_sd, GN_REMODELING_CART) : 1) * 50 * status_get_int(src) / 40), 100);
+			if (sc && sc->data[SC_BO_WOODENWARRIOR].timer != -1) {
 				wd.div_ = 2;
 			}
 			break;
@@ -4404,6 +4435,15 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 				wd.div_ = 2;
 			}
 			break;
+		case GN_CARTCANNON:		// カートキャノン
+			if (src_sd && src_sd->arrow_atk) {
+				DMG_ADD(src_sd->arrow_atk);
+			}
+			if (sc && sc->data[SC_BO_WOODENWARRIOR].timer != -1) {
+				wd.div_ = 2;
+			}
+			DMG_FIX(60 * skill_lv + (((src_sd) ? pc_checkskill(src_sd, GN_REMODELING_CART) : 1) * 50 * status_get_int(src) / 40), 100);
+			break;
 #endif
 		case NC_MAGMA_ERUPTION:	/* マグマイラプション */
 			DMG_FIX( 450 + 50 * skill_lv, 100 );
@@ -4631,13 +4671,12 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( 250, 100 );
 			break;
 		case GN_CART_TORNADO:	// カートトルネード
-			DMG_FIX( 100 * skill_lv + ((src_sd)? pc_checkskill(src_sd,GN_REMODELING_CART): 1) * 50 + ((src_sd)? src_sd->cart_weight/10 / (150-src_sd->status.str): 1), 100 );
-			break;
-		case GN_CARTCANNON:		// カートキャノン
-			if(src_sd && src_sd->arrow_atk) {
-				DMG_ADD( src_sd->arrow_atk );
+			if (sc && sc->data[SC_BO_WOODENWARRIOR].timer != -1) {
+				DMG_FIX(150 * skill_lv + ((src_sd) ? pc_checkskill(src_sd, GN_REMODELING_CART) : 1) * 50 + ((src_sd) ? src_sd->cart_weight / 10 / (150 - src_sd->status.str) : 1), 100);
 			}
-			DMG_FIX( 60 * skill_lv + (((src_sd)? pc_checkskill(src_sd,GN_REMODELING_CART): 1) * 50 * status_get_int(src) / 40), 100 );
+			else {
+				DMG_FIX(100 * skill_lv + ((src_sd) ? pc_checkskill(src_sd, GN_REMODELING_CART) : 1) * 50 + ((src_sd) ? src_sd->cart_weight / 10 / (150 - src_sd->status.str) : 1), 100);
+			}
 			break;
 		case GN_WALLOFTHORN:	// ソーンウォール
 			DMG_FIX( 150 + 50 * skill_lv, 100 );
@@ -4646,7 +4685,11 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( 500 + 100 * skill_lv, 100 );
 			break;
 		case GN_SPORE_EXPLOSION: // スポアエクスプロージョン
-			DMG_FIX( ( 200 + 150 * skill_lv + status_get_int(src)) * status_get_lv(src) / 100, 100 );
+			if (sc && sc->data[SC_BO_WOODEN_FAIRY].timer != -1) {
+				DMG_FIX((200 + 250 * skill_lv + status_get_int(src))* status_get_lv(src) / 100, 100);
+			} else {
+				DMG_FIX((200 + 150 * skill_lv + status_get_int(src))* status_get_lv(src) / 100, 100);
+			}
 			break;
 		case GN_SLINGITEM_RANGEMELEEATK:	// スリングアイテム(遠距離攻撃)
 			switch(skill_lv) {
@@ -6522,6 +6565,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 	case NC_BOOSTKNUCKLE:	// ブーストナックル
 	case NC_VULCANARM:		// バルカンアーム
 	case NC_ARMSCANNON:		// アームズキャノン
+	case GN_CARTCANNON:		// カートキャノン
 	case SC_FATALMENACE:	// フェイタルメナス
 	case LG_HESPERUSLIT:	// ヘスペルスリット
 	case SR_DRAGONCOMBO:	// 双龍脚
@@ -9859,6 +9903,7 @@ int battle_skill_attack(int attack_type,struct block_list* src,struct block_list
 				case RA_ARROWSTORM:
 				case RA_AIMEDBOLT:
 				case NC_ARMSCANNON:
+				case GN_CARTCANNON:
 				case RL_S_STORM:	/* シャッターストーム */
 				case RL_QD_SHOT:	/* クイックドローショット */
 				case RL_FIREDANCE:	/* ファイアーダンス */

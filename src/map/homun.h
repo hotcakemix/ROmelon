@@ -54,7 +54,7 @@ struct homun_db {
 	short aspd_k;
 	short view_class,size,race;
 	int element,evo_class;
-	short exp_table;
+	atn_bignumber exp_table;
 	short skillpoint;
 	struct script_code *script;
 };
@@ -84,6 +84,7 @@ int homun_mutation( struct map_session_data *sd, int class_ );
 int homun_checkskill(struct homun_data *hd,int skill_id);
 void homun_skillup(struct map_session_data *sd, int skill_num);
 int homun_calc_skilltree(struct homun_data *hd);
+int homun_md_gainexp(struct homun_data* hd, struct mob_data* md, atn_bignumber base_exp, atn_bignumber job_exp);
 int homun_gainexp(struct homun_data *hd,struct mob_data *md,atn_bignumber base_exp,atn_bignumber job_exp);
 int homun_nextbaseexp(struct homun_data *hd);
 int homun_calc_status(struct homun_data *hd);

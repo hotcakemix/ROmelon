@@ -7984,6 +7984,7 @@ void pc_setoption(struct map_session_data *sd, unsigned int type)
 		}
 #if PACKETVER > 20191106
 		clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, 2, 0, 0);
+		clif_status_load_id(sd, SI_MADOGEAR, 1);
 #endif
 	}
 	else if (!(type & OPTION_MADOGEAR) && pc_isgear(sd)) {
@@ -7991,6 +7992,9 @@ void pc_setoption(struct map_session_data *sd, unsigned int type)
 		status_change_end(&sd->bl, SC_HOVERING, -1);
 		status_change_end(&sd->bl, SC_OVERHEAT, -1);
 		status_change_end(&sd->bl, SC_SHAPESHIFT, -1);
+		if (pc_iscarton(sd)) {
+			type |= (sd->sc.option & OPTION_CARTMASK) | OPTION_PUSHCART;
+		}
 #if PACKETVER > 20191106
 			clif_status_load_id(sd, SI_MADOGEAR, 0);
 #endif
@@ -9064,6 +9068,54 @@ void pc_unequipitem(struct map_session_data *sd, int n, int type)
 	}
 
 	return;
+}
+
+/*==========================================
+ * れもん追加：装備中アイテムから、id_listに一致する数を数える
+ *------------------------------------------
+int pc_equippedmatchcount(struct map_session_data* sd, const int* id_list, bool* slot_used) {
+
+	if (id_list == NULL)
+		return 0;
+
+	int count = 0;
+
+	for (int j = 0; id_list[j] != -1; j++) {
+		int id = id_list[j];
+
+		for (int i = 0; i < EQUIP_INDEX_MAX; i++) {
+			if (slot_used[i]) // 他のセットで既に使われたスロット
+				continue;
+
+			int idx = sd->equip_index[i];
+			if (idx < 0 || !sd->inventory_data[idx])
+				continue;
+
+			if (sd->inventory_data[idx]->nameid == id) {
+				slot_used[i] = true; // このスロットをこのセットで使った！
+				count++;
+				break;
+			}
+		}
+	}
+	return count;
+}
+/*==========================================
+ * れもん追加：装備中かどうか
+ *------------------------------------------
+bool pc_isequipped(struct map_session_data* sd, int nameid) {
+	if (!sd)
+		return false;
+
+	for (int i = 0; i < EQUIP_INDEX_MAX; i++) {
+		if (sd->equip_index[i] < 0)
+			continue;
+
+		struct item_data* id = sd->inventory_data[sd->equip_index[i]];
+		if (id && id->nameid == nameid)
+			return true;
+	}
+	return false;
 }
 
 /*==========================================

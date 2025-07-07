@@ -3154,7 +3154,7 @@ int do_init(int argc,char *argv[])
 	do_init_itemdb();
 	do_init_quest();
 	do_init_mob();		// npc‚Ì‰Šú‰»“à‚Åmob_spawn‚µ‚ÄAmob_db‚ğQÆ‚·‚é‚Ì‚Åinit_npc‚æ‚èæ
-	do_init_npc();
+//	do_init_npc();
 	do_init_memorial();
 	do_init_pc();
 	do_init_bonus();
@@ -3174,6 +3174,7 @@ int do_init(int argc,char *argv[])
 	do_init_extra();
 
 	luascript_config_read(luascript_conf_filename);
+	do_init_npc();
 	map_pk_server(map_pk_server_flag);
 	map_pk_nightmaredrop(map_pk_nightmaredrop_flag);
 	map_pk_noteleport(map_pk_noteleport_flag);

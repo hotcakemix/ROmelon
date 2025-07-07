@@ -1276,7 +1276,7 @@ int homun_calc_skilltree(struct homun_data *hd)
  */
 static int homun_checkbaselevelup(struct homun_data *hd)
 {
-	int next = homun_nextbaseexp(hd);
+	atn_bignumber next = homun_nextbaseexp(hd);
 
 	nullpo_retr(0, hd);
 
@@ -1302,9 +1302,35 @@ static int homun_checkbaselevelup(struct homun_data *hd)
 
 	return 0;
 }
+/*==========================================
+ * 経験値取得 マスターへ指定倍の経験値を渡すその後取得メインへ
+ *------------------------------------------
+ */
+int homun_md_gainexp(struct homun_data* hd, struct mob_data* md, atn_bignumber base_exp, atn_bignumber job_exp) 
+{
+	nullpo_retr(0, hd);
+
+	if (hd->bl.prev == NULL || unit_isdead(&hd->bl))
+		return 0;
+
+	if (hd->msd) {	// 主人へ指定倍の経験値
+		atn_bignumber mbexp = 0, mjexp = 0;
+		if (battle_config.master_get_homun_base_exp)
+			mbexp = base_exp * battle_config.master_get_homun_base_exp / 100;
+		if (battle_config.master_get_homun_job_exp)
+			mjexp = job_exp * battle_config.master_get_homun_job_exp / 100;
+
+		if (mbexp || mjexp)
+			pc_gainexp(hd->msd, md, mbexp, mjexp, 0);
+	}
+
+	homun_gainexp(hd, md, base_exp, job_exp);
+
+	return 0;
+}
 
 /*==========================================
- * 経験値取得
+ * 経験値取得メイン
  *------------------------------------------
  */
 int homun_gainexp(struct homun_data *hd,struct mob_data *md,atn_bignumber base_exp,atn_bignumber job_exp)
@@ -1317,17 +1343,6 @@ int homun_gainexp(struct homun_data *hd,struct mob_data *md,atn_bignumber base_e
 	if(md && md->sc.data[SC_RICHMANKIM].timer != -1) {
 		base_exp = base_exp * (125 + md->sc.data[SC_RICHMANKIM].val1*11)/100;
 		job_exp  = job_exp  * (125 + md->sc.data[SC_RICHMANKIM].val1*11)/100;
-	}
-
-	if(hd->msd) {	// 主人へ指定倍の経験値
-		atn_bignumber mbexp = 0, mjexp = 0;
-		if(battle_config.master_get_homun_base_exp)
-			mbexp = base_exp * battle_config.master_get_homun_base_exp / 100;
-		if(battle_config.master_get_homun_job_exp)
-			mjexp = job_exp  * battle_config.master_get_homun_job_exp / 100;
-
-		if(mbexp || mjexp)
-			pc_gainexp(hd->msd,md,mbexp,mjexp,0);
 	}
 
 	if(base_exp > 0) {
@@ -1371,13 +1386,14 @@ int homun_gainexp(struct homun_data *hd,struct mob_data *md,atn_bignumber base_e
 	return 0;
 }
 
+
 /*==========================================
  * base level側必要経験値計算
  *------------------------------------------
  */
 int homun_nextbaseexp(struct homun_data *hd)
 {
-	int i;
+	atn_bignumber i;
 
 	nullpo_retr(0, hd);
 

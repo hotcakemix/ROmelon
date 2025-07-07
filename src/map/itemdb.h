@@ -34,9 +34,9 @@
 #define MAX_UPGRADE_LIST		10
 
 //れもん追加barter
-#define MAX_BARTER_ENTRY		100
-#define MAX_EXPBARTER_ENTRY		100
-#define MAX_EXPBARTER_ITEM		10
+#define MAX_BARTER_ENTRY		10000
+#define MAX_EXPBARTER_ENTRY		10000
+#define MAX_EXPBARTER_ITEM		5
 
 struct item_data {
 	int nameid;
@@ -124,9 +124,15 @@ struct barter_item_data {
 		int nameid;		//expbarterに必要なアイテム
 		int refine;		//expbarterに必要なアイテムの精錬度	
 		int amount;		//expbarterに必要なアイテムの個数
-	}barter[MAX_EXPBARTER_ITEM];
+	}expbarter[MAX_EXPBARTER_ITEM];
 };
 
+struct add_barter_item {
+	int addnameid;
+	int addamount;
+	int removeindex;
+	int shopindex;
+};
 
 struct item_data* itemdb_searchname(const char *name);
 struct item_data* itemdb_search(int nameid);
@@ -187,8 +193,10 @@ bool itemdb_insert_randoptdb(struct randopt_item_data ro);
 
 int itemdb_barter_item(int nameid);
 int itemdb_expbarter_item(int nameid);
-struct barter_item_data itemdb_barter_data(int nameid);
-struct barter_item_data itemdb_expbarter_data(int nameid);
+struct barter_item_data itemdb_barter_data(int barter_id);
+struct barter_item_data itemdb_expbarter_data(int barter_id);
+
+bool itemdb_insert_barterdb(struct barter_item_data bi);
 
 
 void itemdb_reload(void);

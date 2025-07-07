@@ -37,6 +37,7 @@ int npc_buylist(struct map_session_data *,int,unsigned char *);
 int npc_selllist(struct map_session_data *,int,unsigned short *);
 int npc_pointshop_buy(struct map_session_data *sd,int nameid,int amount);
 int npc_pointshop_buylist(struct map_session_data *sd, int len, int count, const unsigned char *item_list);
+int npc_expanded_barter_buylist(struct map_session_data* sd, int count, struct add_barter_item* list);
 int npc_set_mapflag(int m,const char *w3,const char *w4);
 int npc_set_mapflag_sub(int m,const char *str,short flag);
 int npc_globalmessage(const char *name,const char *mes);

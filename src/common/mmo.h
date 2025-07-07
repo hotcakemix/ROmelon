@@ -745,7 +745,7 @@ struct mmo_homunstatus {
 	int char_id;
 	int homun_id;
 	short class_;
-	int base_exp;
+	atn_bignumber base_exp;
 
 	short status_point,skill_point;
 	int hp,max_hp,sp,max_sp;

@@ -1045,6 +1045,7 @@ void npc_click(struct map_session_data *sd, int id)
 				if (nd->u.shop_item[i].qty) {
 					sd->npc_id     = id;
 					sd->npc_shopid = id;
+					printf("CLICK: npc_id=%d npc_shopid=%d\n", sd->npc_id, sd->npc_shopid);
 					clif_market_list(sd,nd);
 					npc_event_dequeue(sd);
 					break;
@@ -1053,16 +1054,22 @@ void npc_click(struct map_session_data *sd, int id)
 		}
 #endif
 		break;
-	case BARTER:
-/*#if PACKETVER >= 20190116
+	case EXPBARTER:
 		{
-			sd->npc_id = id;
-			sd->npc_shopid = id;
-			clif_barter_list(sd, nd);
-			npc_event_dequeue(sd);
+			int i;
+
+			for (i = 0; nd->u.shop_item[i].nameid; i++) {
+				if (nd->u.shop_item[i].qty) {
+					sd->npc_id = id;
+					sd->npc_shopid = id;
+					printf("CLICK: npc_id=%d npc_shopid=%d\n", sd->npc_id, sd->npc_shopid);
+					clif_barter_list(sd, nd);
+					npc_event_dequeue(sd);
+					break;
+				}
+			}
 		}
-#endif
-		break; */
+		break;
 	case SCRIPT:
 		if(nd->u.scr.script) {
 			sd->npc_id = id;
@@ -1573,6 +1580,221 @@ int npc_pointshop_buylist(struct map_session_data *sd, int len, int count, const
 	return 0;
 }
 
+
+/*==========================================
+ * れもん追加barter購入
+ *------------------------------------------
+ */
+int npc_expanded_barter_buylist(struct map_session_data* sd, int count, struct add_barter_item* list)
+{
+	struct npc_data* nd;
+	int i;
+	short items[MAX_INVENTORY] = { 0 };
+	short market_qty[MAX_INVENTORY];
+	int w = 0;	//重量
+	int z = 0;	//zenny
+	int new_add = 0;
+
+	nullpo_retr(1, sd);
+	nullpo_retr(1, list);
+
+	nd = map_id2nd(sd->npc_shopid);
+	if (npc_checknear(sd, nd)) // check NULL of nd and if nd->bl.type is BL_NPC
+		return 11;
+
+	if (nd->subtype != EXPBARTER)
+		return 11;
+
+	if (count < 0)
+		return 11;
+
+	if (sd->state.deal_mode != 0)
+		return 11;
+
+	memset(market_qty, 0, sizeof(market_qty));
+	struct npc_item_list* item_list = nd->u.shop_item;		//めんどいから変数に
+
+	//cが頭につくのは素材側 addはパケットから送られてくるリスト
+	for (i = 0; i < count; i++) {
+		int qty = 0;
+		unsigned short x = 0 , j , n;
+
+		//リストの中身確認
+		int addamount = list[i].addamount;
+		int addnameid = list[i].addnameid;
+		int index = list[i].shopindex;
+		printf("取得確認-> addamoun%d -> addnameid%d -> index%d\n", list[i].addamount, list[i].addnameid, list[i].shopindex);
+
+		//中身チェック
+		if (index < 0 || item_list[index].nameid <= 0)
+			return 13;
+
+		if (item_list[index].nameid != list[i].addnameid)
+			return 13;
+
+		if(addnameid < 0 || addamount < 0)
+			return 13;
+
+		if (item_list[index].qty != -1 && addamount > item_list[index].qty)
+			return 1;
+
+		unsigned short ccount_size = 0;		//ここで素材数カウント
+		while (ccount_size < MAX_EXPBARTER_ITEM && item_list[index].expbarter_item[x].nameid > 0) {
+			ccount_size++;
+		}
+
+		for (j = 0; j < ccount_size; j++) {		//素材確認処理
+			int cnameid = item_list[index].expbarter_item[j].nameid;
+			int crefine = item_list[index].expbarter_item[j].refine;
+			int camount = item_list[index].expbarter_item[j].amount * addamount;
+			if (camount <= 0)
+				continue;
+			printf("素材確認-> addamoun%d -> addnameid%d -> index%d -> refine%d\n",
+				item_list[index].expbarter_item[j].amount * addamount, item_list[index].expbarter_item[j].nameid, list[i].shopindex,
+				item_list[index].expbarter_item[j].refine);
+
+			for (n = 0; n < MAX_INVENTORY && camount > 0; n++) {
+				if (sd->status.inventory[n].nameid == cnameid && sd->status.inventory[n].amount > 0) {
+					if (crefine > 0 && crefine != sd->status.inventory[n].refine)
+						continue;
+					printf("インベントリ確認-> nameid%d -> amount%d\n", sd->status.inventory[n].nameid, sd->status.inventory[n].amount);
+					if (sd->status.inventory[n].amount >= camount) {
+						items[n] += camount;
+						camount = 0;
+						w -= itemdb_weight(cnameid) * camount;
+						break;
+					}
+					else {
+						items[n] += sd->status.inventory[n].amount;
+						camount -= sd->status.inventory[n].amount;
+						w -= itemdb_weight(cnameid) * sd->status.inventory[n].amount;
+					}
+				}
+				if (items[n] > sd->status.inventory[n].amount)
+					return 14;
+			}
+			if (camount != 0) {
+				return 14;
+			}
+		}
+
+		addnameid = item_list[index].nameid;
+
+		market_qty[i] = index;
+
+		if (itemdb_isequip3(addnameid) && addamount > 1) {
+			addamount = 1;
+		}
+
+		switch (pc_checkadditem(sd, addnameid, addamount)) {
+		case ADDITEM_EXIST:
+			break;
+		case ADDITEM_NEW:
+			new_add++;
+			break;
+		case ADDITEM_OVERAMOUNT:
+			return 1;
+		}
+
+		z += item_list[index].value * addamount;
+		w += itemdb_weight(addnameid) * addamount;
+	}
+
+	if (z > sd->status.zeny)
+		return 3;
+
+	if (w + sd->weight > sd->max_weight)
+		return 2;
+
+	if (pc_inventoryblank(sd) < new_add)
+		return 3;
+
+	for (int i = 0; i < MAX_INVENTORY; i++) {
+		int totalamount = items[i];
+		if (totalamount == 0)
+			continue;
+		pc_delitem(sd, i, totalamount, 0, 6);
+	}
+
+	pc_payzeny(sd, (int)z);
+
+	for (int i = 0; i < count; i++) {
+		int index = market_qty[i];
+		int addnameid = item_list[index].nameid;
+		int addamount = list[i].addamount;
+
+
+		if ((int)item_list[index].qty != -1) {
+			if (addamount > (int)item_list[index].qty)
+				return 14;
+			item_list[index].qty -= addamount;
+		}
+
+
+		struct item item_tmp;
+		memset(&item_tmp, 0, sizeof(item_tmp));
+		item_tmp.nameid = addnameid;
+		item_tmp.identify = 1;
+		pc_additem(sd, &item_tmp, addamount, false);
+	}
+	
+	return 0;
+
+}
+
+/*==========================================
+ * れもん追加barter購入
+ *------------------------------------------
+ *//*
+int npc_barter_buylist(struct map_session_data* sd, struct barter_item_data* bi, int count) 
+{
+	struct npc_data* nd;
+	struct item_data* item_data;
+	int i;
+
+	nullpo_retr(1, sd);
+	nullpo_retr(1, bi);
+
+	nd = map_id2nd(sd->npc_shopid);
+	if (npc_checknear(sd, nd)) // check NULL of nd and if nd->bl.type is BL_NPC
+		return 1;
+
+	if (nd->subtype != EXPBARTER)
+		return 1;
+
+	if (sd->state.deal_mode != 0)
+		return 4;
+
+	if ( count <= 0)
+		return 5;
+
+	for (int i = 0; nd->u.barter.barter_id[i] != 0; i++) {
+		int id = nd->u.barter.barter_id[i];
+
+		// 通常barterかexpbarterか判定して処理
+		if (itemdb_expbarter_item(id)) {
+			struct barter_item_data bi = itemdb_expbarter_data(id);
+			if (bi.nameid == 0)
+				continue;
+
+			// ここでexpbarter処理を書く（未実装）
+			// 例：所持アイテムと必要アイテムの比較など
+
+		}
+		else if (itemdb_barter_item(id)) {
+			struct barter_item_data b = itemdb_barter_data(id);
+			if (b.nameid == 0)
+				continue;
+
+			// ここで通常barterの処理を書く（未実装）
+			// 例：b.nameid, b.value, b.value2 を使って交換処理など
+		}
+	}
+	
+	return 0;
+}
+*/
+
 /*==========================================
  * メモリアルダンジョンNPC追加
  *------------------------------------------
@@ -1647,6 +1869,7 @@ int npc_addmdnpc(struct npc_data *src_nd, int m)
 	case SHOP:
 	case POINTSHOP:
 	case MARKET:
+	//case EXPBARTER:
 		{
 			int pos = 0;
 			while(src_nd->u.shop_item[pos++].nameid);
@@ -2128,6 +2351,150 @@ static int npc_parse_warp(const char *w1,const char *w2,const char *w3,const cha
 }
 
 /*==========================================
+ * barter行解析
+ *------------------------------------------
+ *//*
+static int npc_parse_barter(const char* w1, const char* w2, const char* w3, const char* w4, int lines)
+{
+	char* p;
+	int m, x, y, dir = 0;
+	int n, pos = 0;
+	unsigned char subtype;
+	struct npc_data* nd;
+	int barter_id;
+
+	if (strcmp(w2, "barter") == 0)
+		subtype = EXPBARTER;
+	else
+		subtype = 0;
+
+	if (strcmp(w1, "-") == 0) {
+		x = 0;
+		y = 0;
+		m = -1;
+	}
+	else {
+		char mapname[4096];
+
+		// 引数の個数チェック
+		if (sscanf(w1, "%4095[^,],%d,%d,%d%n", mapname, &x, &y, &dir, &n) != 4 || w1[n] != 0 ||
+			(subtype != 0 && strchr(w4, ',') == NULL))
+		{
+			printf("bad shop declaration : %s line %d\a\n", w3, lines);
+			return 0;
+		}
+		m = map_mapname2mapid(mapname);
+		if (m < 0)
+			return 0;	// assignされてないMAPなので終了
+	}
+	// barter_id を読み取って shop_item[] に詰める
+	if (subtype == EXPBARTER) {
+		const int max = 100;
+		char *c;
+
+		nd = (struct npc_data*)aCalloc(1, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * (max + 1));
+		c = strchr(w4, ',');
+		while (c && pos < max) {
+			struct item_data* id = NULL;
+			int nameid, value, value2 = -1;
+
+			c++;
+			if (sscanf(c, "%d", &barter_id) < 1) {
+				char* np = strchr(c, ',');
+				if (np) {
+					np[1] = 0;
+				}
+				printf("bad %s item %s : %s line %d\a\n", w2, c, w3, lines);
+				pos = 0;
+				break;
+			}
+			struct barter_item_data bi;
+			if (itemdb_barter_item(barter_id)) {
+				bi = itemdb_barter_data(barter_id);
+				nameid = bi.nameid;
+				value = bi.value;
+				value2 = bi.value2;
+			}
+			else if (itemdb_expbarter_item(barter_id)) {
+				bi = itemdb_expbarter_data(barter_id);
+				nameid = bi.nameid;
+				value = bi.value;
+				value2 = bi.value2;
+				for (int x = 0; x < MAX_EXPBARTER_ITEM; x++) {
+					nd->u.shop_item[pos].expbarter_item[x].nameid = bi.expbarter[x].nameid-1;
+					nd->u.shop_item[pos].expbarter_item[x].refine = bi.expbarter[x].refine;
+					nd->u.shop_item[pos].expbarter_item[x].amount = bi.expbarter[x].amount;
+				}
+			}
+			else {
+				printf("barter_id: %d not found\n", barter_id);
+			//	continue;
+			}
+			printf("barter_id: %d not found\n", nameid);
+			id = itemdb_search(nameid);
+			nd->u.shop_item[pos].nameid = nameid;
+			nd->u.shop_item[pos].value = value;
+			nd->u.shop_item[pos].value2 = value2;
+			pos++;
+				c = strchr(c, ',');
+		}
+		if (pos == 0) {
+			aFree(nd);
+			return 0;
+		}
+		nd->u.shop_item[pos++].nameid = 0;
+		nd = (struct npc_data*)aRealloc(nd, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * pos);
+	}
+
+	// 基本NPC情報設定
+	nd->bl.prev = nd->bl.next = NULL;
+	nd->bl.m = m;
+	nd->bl.x = x;
+	nd->bl.y = y;
+	nd->bl.id = npc_get_new_npc_id();
+	nd->dir = dir;
+	nd->flag = 0;
+
+	// 名前・表示名
+	p = strstr(w3, "::");
+	if (p) {
+		char* p2;
+		*p = 0;
+		p += 2;
+		if ((p2 = strstr(p, "::")) != NULL)
+			*p2 = 0;
+		strncpy(nd->name, w3, 50);
+		strncpy(nd->exname, p, 50);
+	}
+	else {
+		strncpy(nd->name, w3, 50);
+		strncpy(nd->exname, w3, 50);
+	}
+	nd->name[49] = '\0';
+	nd->exname[49] = '\0';
+
+	nd->class_ = atoi(w4);
+	nd->speed = 200;
+	nd->click_able = 0;
+	nd->chat_id = 0;
+	nd->option = OPTION_NOTHING;
+	npc_shop++;
+	nd->bl.type = BL_NPC;
+	nd->subtype = subtype;
+
+	map_addiddb(&nd->bl);
+	if (m >= 0) {
+		map_addblock(&nd->bl);
+		clif_spawnnpc(nd);
+	}
+	strdb_insert(npcname_db, nd->exname, nd);
+
+	return 0;
+}
+
+*/
+
+/*==========================================
  * shop行解析
  *------------------------------------------
  */
@@ -2143,24 +2510,15 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 		subtype = SHOP;
 	else if(strcmp(w2,"pointshop") == 0)
 		subtype = POINTSHOP;
+	else if (strcmp(w2, "barter") == 0)
+		subtype = EXPBARTER;
 	else if(strcmp(w2,"market") == 0)
 #if PACKETVER < 20131223
 		return 0;
 #else
 		subtype = MARKET;
 #endif
-	else if(strcmp(w2,"barter") == 0)
-#if PACKETVER < 20190116
-		return 0;
-#else
-		subtype = BARTER;
-#endif
-	else if (strcmp(w2, "expbarter") == 0)
-#if PACKETVER < 20190904
-		return 0;
-#else
-		subtype = EXPBARTER;
-#endif
+
 	else
 		subtype = 0;
 
@@ -2183,14 +2541,14 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 			return 0;	// assignされてないMAPなので終了
 	}
 
-	if(subtype == SHOP || subtype == POINTSHOP || subtype == MARKET || subtype == BARTER) {
+	if (subtype == SHOP || subtype == POINTSHOP || subtype == MARKET) {
 		const int max = 100;
-		char *c;
+		char* c;
 
-		nd = (struct npc_data *)aCalloc(1, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * (max + 1));
+		nd = (struct npc_data*)aCalloc(1, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * (max + 1));
 		c = strchr(w4, ',');
-		while(c && pos < max) {
-			struct item_data *id = NULL;
+		while (c && pos < max) {
+			struct item_data* id = NULL;
 			int nameid, value = -1;
 			int qty = -1;
 			c++;
@@ -2204,12 +2562,13 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 					pos = 0;
 					break;
 				}
-			} else {
+			}
+			else {
 				int ret;
 				ret = sscanf(c, "%d:%d", &nameid, &value);
-				if(ret < 1 || (subtype == POINTSHOP && ret < 2)) {
-					char *np = strchr(c, ',');
-					if(np) {
+				if (ret < 1 || (subtype == POINTSHOP && ret < 2)) {
+					char* np = strchr(c, ',');
+					if (np) {
 						np[1] = 0;
 					}
 					printf("bad %s item %s : %s line %d\a\n", w2, c, w3, lines);
@@ -2220,39 +2579,98 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 			id = itemdb_search(nameid);
 			nd->u.shop_item[pos].nameid = nameid;
 			nd->u.shop_item[pos].qty = qty;
-			if(subtype == SHOP) {
+			if (subtype == SHOP) {
 				int sell_max, buy_max;
-				if(value < 0) {
+				if (value < 0) {
 					value = id->value_buy;
 				}
-				if(id->flag.value_notoc)	//NOTOCフラグを判定
+				if (id->flag.value_notoc)	//NOTOCフラグを判定
 					sell_max = id->value_sell;
 				else
 					sell_max = pc_modifysellvalue(NULL, id->value_sell);
 
-				if(id->flag.value_notdc)	//NOTDCフラグを判定
-					buy_max  = value;
+				if (id->flag.value_notdc)	//NOTDCフラグを判定
+					buy_max = value;
 				else
-					buy_max  = pc_modifybuyvalue(NULL, value);
+					buy_max = pc_modifybuyvalue(NULL, value);
 
-				if(sell_max > buy_max) {
+				if (sell_max > buy_max) {
 					// 売り値が買い値を越える可能性があるので警告
 					printf("warning shop sell value (id = %d, %dz > %dz) : %s line %d\a\n", nameid, sell_max, buy_max, w3, lines);
 				}
 			}
-			else if(subtype == MARKET && value < 0)
+			else if (subtype == MARKET && value < 0)
 				value = id->value_buy;
 			nd->u.shop_item[pos].value = value;
 			pos++;
-			c = strchr(c,',');
+			c = strchr(c, ',');
 		}
-		if(pos == 0) {
+		if (pos == 0) {
 			aFree(nd);
 			return 0;
 		}
 		nd->u.shop_item[pos++].nameid = 0;
 
-		nd = (struct npc_data *)aRealloc(nd, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * pos);
+		nd = (struct npc_data*)aRealloc(nd, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * pos);
+
+	}	else if (subtype == EXPBARTER) {
+		int barter_id = 0;
+		const int max = 100;
+		char* c;
+
+			nd = (struct npc_data*)aCalloc(1, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * (max + 1));
+			c = strchr(w4, ',');
+			while (c && pos < max) {
+				struct item_data* id = NULL;
+				int nameid, value, value2 = -1;
+				int qty = -1;
+
+				c++;
+				if (sscanf(c, "%d:%d:%d", &barter_id, &value, &qty) < 3) {
+					char* np = strchr(c, ',');
+					if (np) {
+						np[1] = 0;
+					}
+					printf("bad %s item %s : %s line %d\a\n", w2, c, w3, lines);
+					pos = 0;
+					break;
+				}
+				struct barter_item_data bi;
+				if (itemdb_barter_item(barter_id)) {
+					bi = itemdb_barter_data(barter_id);
+					nameid = bi.nameid;
+					nd->u.shop_item[pos].expbarter_item[0].nameid = bi.value;
+					nd->u.shop_item[pos].expbarter_item[0].amount = bi.value2;
+					nd->u.shop_item[pos].value = value;
+					nd->u.shop_item[pos].qty = qty;
+				}
+				else if (itemdb_expbarter_item(barter_id)) {
+					bi = itemdb_expbarter_data(barter_id);
+					nameid = bi.nameid;
+					nd->u.shop_item[pos].value = value;
+					nd->u.shop_item[pos].qty   = qty;
+					for (int x = 0; x < MAX_EXPBARTER_ITEM; x++) {
+							nd->u.shop_item[pos].expbarter_item[x].nameid = bi.expbarter[x].nameid;
+							nd->u.shop_item[pos].expbarter_item[x].refine = bi.expbarter[x].refine;
+							nd->u.shop_item[pos].expbarter_item[x].amount = bi.expbarter[x].amount;
+					}
+				} else {
+					printf("barter_id: %d not found\n", barter_id);
+					continue;
+				}
+				id = itemdb_search(nameid);
+				nd->u.shop_item[pos].nameid = nameid;
+				pos++;
+				c = strchr(c, ',');
+			}
+			if (pos == 0) {
+				aFree(nd);
+				return 0;
+			}
+			nd->u.shop_item[pos++].nameid = 0;
+
+			nd = (struct npc_data*)aRealloc(nd, sizeof(struct npc_data) + sizeof(nd->u.shop_item[0]) * pos);
+	
 	} else {
 		// substoreはコピーするだけ
 		char srcname[4096];
@@ -2267,7 +2685,7 @@ static int npc_parse_shop(const char *w1,const char *w2,const char *w3,const cha
 			printf("bad substore name! (not exist) : %s line %d\a\n",srcname,lines);
 			return 0;
 		}
-		if(nd2->subtype != SHOP && nd2->subtype != POINTSHOP && nd2->subtype != MARKET && nd2->subtype != BARTER) {
+		if(nd2->subtype != SHOP && nd2->subtype != POINTSHOP && nd2->subtype != MARKET) {
 			printf("bad substore name! (not shop) : %s line %d\a\n",srcname,lines);
 			return 0;
 		}
@@ -3282,7 +3700,7 @@ static int npc_parse_srcfile(const char *filepath)
 
 		if (strcmpi(w2,"warp") == 0 && count > 3) {
 			ret = npc_parse_warp(w1,w2,w3,w4,lines);
-		} else if ((strcmpi(w2,"shop") == 0 || strcmpi(w2,"pointshop") == 0 || strcmpi(w2,"market") == 0 || strcmpi(w2, "barter") == 0) && count > 3) {
+		} else if ((strcmpi(w2,"shop") == 0 || strcmpi(w2,"pointshop") == 0 || strcmpi(w2,"market") == 0 || strcmpi(w2, "barter") == 0 ) && count > 3) {
 			ret = npc_parse_shop(w1,w2,w3,w4,lines);
 		} else if ((i = 0, sscanf(w2,"substore%n",&i), (i > 0 && w2[i] == '(')) && count > 3) {
 			ret = npc_parse_shop(w1,w2,w3,w4,lines);

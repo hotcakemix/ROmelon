@@ -43,6 +43,8 @@
 #include "clif.h"
 #include "luascript.h"
 
+#include "setbonus.h"	//れもん追加
+
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
@@ -604,27 +606,162 @@ static int luafunc_InsertRandopt(lua_State *NL)
  * barter_db.lua
  *------------------------------------------
  */
-/*
-static int luafunc_InsertBarter(lua_State* NL) {
-	int nameid, amount;
+static int luafunc_InsertBarter(lua_State* NL)
+{
+	int barter_id, nameid, value, value2, expnameid, refine, amount;
 	int i = 0;
 	struct barter_item_data bi;
+	bool result;
 
+	memset(&bi, 0, sizeof(bi));
 
+	barter_id = luaL_checkint(NL, 1);
+	bi.barter_id = barter_id;
+
+	nameid = luaL_checkint(NL, 2);
+	bi.nameid = nameid;
+
+	// value と value2 の初期値を設定
+	value = luaL_checkint(NL, 3);
+	value2 = luaL_checkint(NL, 4);
+
+	if (lua_istable(NL, 5)) {
+		// expbarter テーブルが存在する場合、value と value2 を 0 に設定
+		value = 0;
+		value2 = 0;
+
+		lua_pushnil(NL);
+		while (lua_next(NL, 5)) {
+			if (lua_istable(NL, -1)) {
+				lua_pushnil(NL);
+				while (lua_next(NL, -2)) {
+					int key = luaL_checkint(NL, -2);
+					switch (key) {
+					case 1:
+						expnameid = luaL_checkint(NL, -1);
+						bi.expbarter[i].nameid = expnameid;
+						break;
+					case 2:
+						refine = luaL_checkint(NL, -1);
+						bi.expbarter[i].refine = refine;
+						break;
+					case 3:
+						amount = luaL_checkint(NL, -1);
+						bi.expbarter[i].amount = amount;
+						break;
+					default:
+						luaL_error(NL, "Invalid key in expbarter table: %d", key);
+						return 0;
+					}
+					lua_pop(NL, 1);
+				}
+				lua_pop(NL, 1);
+				if (++i >= 6) {
+					luaL_error(NL, "Too many expbarter items (max: %d).", MAX_EXPBARTER_ITEM);
+					return 0;
+				}
+			}
+			else {
+				luaL_error(NL, "Expbarter table must contain tables.");
+				return 0;
+			}
+		}
+		lua_pop(NL, 1);
+	}
+
+	bi.value = value;
+	bi.value2 = value2;
+
+	result = itemdb_insert_barterdb(bi);
+	if (!result) {
+		luaL_error(NL, "Failed to insert barter item into database.");
+		return 0;
+	}
+
+	lua_pushboolean(NL, result);
+	return 1;
 }
 
-*/
+
 /*==========================================
- * expbarter_db.lua
+ * れもん追加set_bonus.lua
  *------------------------------------------
  */
-/*
-static int luafunc_InsertExpBarter(lua_State* NL) {
+static int luafunc_InsertSetBonus(lua_State* NL)
+{
+	int id;
+	struct set_bonus_item_data sb;
+	bool result = false;
 
+	// 第1引数: id
+	id = luaL_checkint(NL, 1);
+	sb.id = id;
 
+	// 第2引数: ID配列
+	luaL_checktype(NL, 2, LUA_TTABLE);
+	int id_count = 0;
+	lua_pushnil(NL); // スタックに nil をプッシュ (lua_next の初期値)
+	while (lua_next(NL, 2) != 0) {
+		if (lua_isnumber(NL, -2)) {
+			if (id_count < MAX_SET_EQUIP) {
+				if (lua_isnumber(NL, -1)) {
+					sb.id_list[id_count++] = (int)lua_tonumber(NL, -1);
+				}
+			}
+		}
+		lua_pop(NL, 1);
+	}
+	for (; id_count < MAX_SET_EQUIP; id_count++)
+		sb.id_list[id_count] = -1;
 
+	// 第3引数: bonusテーブル
+	luaL_checktype(NL, 3, LUA_TTABLE);
+	int bonus_count = 0;
+	lua_pushnil(NL);
+	while (lua_next(NL, 3) != 0) {
+		if (lua_isnumber(NL, -2)) {
+			if (bonus_count < MAX_SET_BONUS_COUNT && lua_istable(NL, -1)) {
+				lua_getfield(NL, -1, "count");
+				lua_getfield(NL, -2, "script");
+
+				if (lua_isnumber(NL, -2) && lua_isstring(NL, -1)) {
+					sb.bonuses[bonus_count].count = (int)lua_tonumber(NL, -2);
+					const char* script_str = luaL_checkstring(NL, -1);
+
+					if (script_str) {
+						// もう { } で囲まない！そのまま使う
+						unsigned char script_buf[4096];
+						strncpy((char*)script_buf, script_str, sizeof(script_buf) - 1);
+						script_buf[sizeof(script_buf) - 1] = '\0';
+
+						// Syntaxチェック（itemdbと同じ）
+						char* endptr = parse_script_line_end(script_buf, "setbonus_db.lua", -1);
+						if (endptr) {
+							struct script_code* code = parse_script(script_buf, "setbonus_db.lua", -1);
+							if (!script_is_error(code)) {
+								sb.bonuses[bonus_count].script = code;
+							}
+							else {
+								sb.bonuses[bonus_count].script = NULL;
+							}
+						}
+						else {
+							sb.bonuses[bonus_count].script = NULL;
+						}
+					}
+				}
+				lua_pop(NL, 2); // count, script
+				bonus_count++;
+			}
+		}
+		lua_pop(NL, 1);
+	}
+
+	result = itemdb_insert_setbonusdb(sb);
+
+	lua_pushboolean(NL, result);
+	return 1;
 }
-*/
 /*==========================================
  * achievement_db.lua
  *------------------------------------------
@@ -695,8 +832,8 @@ const struct Lua_function luafunc[] = {
 	{"addpacket",luafunc_addpacket},
 	{"packet_key",luafunc_packet_key},
 	{"InsertRandopt",luafunc_InsertRandopt},
-	//{"InsertBarter",luafunc_InsertBarter},
-	//{"InsertExpBarter",luafunc_InsertExpBarter},
+	{"InsertBarter",luafunc_InsertBarter},
+	{"InsertSetBonus",luafunc_InsertSetBonus},
 	{"InsertAchieveInfo",luafunc_InsertAchieveInfo},
 	{"InsertAchieveContent",luafunc_InsertAchieveContent},
 	{"InsertAchieveDBEnd",luafunc_InsertAchieveDBEnd},

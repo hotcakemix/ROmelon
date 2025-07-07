@@ -13788,7 +13788,7 @@ int buildin_callshop(struct script_state *st)
 
 	shopname = conv_str(st,& (st->stack->stack_data[st->start+2]));
 	nd = npc_name2id(shopname);
-	if(!nd || nd->bl.type != BL_NPC || (nd->subtype != SHOP && nd->subtype != POINTSHOP && nd->subtype != MARKET && nd->subtype != BARTER)) {
+	if(!nd || nd->bl.type != BL_NPC || (nd->subtype != SHOP && nd->subtype != POINTSHOP && nd->subtype != MARKET && nd->subtype != EXPBARTER)) {
 		return 0;
 	}
 
@@ -13819,10 +13819,18 @@ int buildin_callshop(struct script_state *st)
 			}
 		}
 		break;
-	/*case BARTER:
-		sd->npc_shopid = nd->bl.id;
-		clif_barter_list(sd, nd);
-		break; */
+	case EXPBARTER:
+	{
+		int i;
+		for (i = 0; nd->u.shop_item[i].nameid; i++) {
+			if (nd->u.shop_item[i].qty) {
+				sd->npc_shopid = nd->bl.id;
+				clif_barter_list(sd, nd);
+				break;
+			}
+		}
+	}
+	break;
 	}
 
 	return 0;
@@ -13841,7 +13849,7 @@ int buildin_npcshopitem(struct script_state *st)
 
 	shopname = conv_str(st,& (st->stack->stack_data[st->start+2]));
 	nd = npc_name2id(shopname);
-	if(!nd || nd->bl.type != BL_NPC || (nd->subtype != SHOP && nd->subtype != POINTSHOP && nd->subtype != MARKET && nd->subtype != BARTER)) {
+	if(!nd || nd->bl.type != BL_NPC || (nd->subtype != SHOP && nd->subtype != POINTSHOP && nd->subtype != MARKET)) {
 		return 0;
 	}
 

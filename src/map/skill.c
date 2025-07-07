@@ -5411,22 +5411,24 @@ int skill_castend_damage_id( struct block_list* src, struct block_list *bl,int s
 		}
 		break;
 	case NC_ARMSCANNON:		/* アームズキャノン */
-		if(flag&1) {
-			if(bl->id != skill_area_temp[1])
-				battle_skill_attack(BF_WEAPON,src,src,bl,skillid,skilllv,tick,0x500);
-		} else {
-			int ar = skill_get_area(skillid,skilllv);
-			if(sd) {
-				int cost = skill_get_arrow_cost(skillid,skilllv);
-				if(cost > 0 && !battle_delarrow(sd, cost, skillid))	// 矢の消費
+		if (flag & 1) {
+			/* 個別にダメージを与える */
+			if (bl->id != skill_area_temp[1])
+				battle_skill_attack(BF_WEAPON, src, src, bl, skillid, skilllv, tick, flag);
+		}
+		else {
+			int ar = skill_get_area(skillid, skilllv);
+			if (sd) {
+				int cost = skill_get_arrow_cost(skillid, skilllv);
+				if (cost > 0 && !battle_delarrow(sd, cost, skillid))	// 矢の消費
 					break;
 			}
 			skill_area_temp[1] = bl->id;
 			/* まずターゲットに攻撃を加える */
-			battle_skill_attack(BF_WEAPON,src,src,bl,skillid,skilllv,tick,0);
+			battle_skill_attack(BF_WEAPON, src, src, bl, skillid, skilllv, tick, 0);
 			map_foreachinarea(skill_area_sub,
-				bl->m,bl->x-ar,bl->y-ar,bl->x+ar,bl->y+ar,(BL_CHAR|BL_SKILL),
-				src,skillid,skilllv,tick,flag|BCT_ENEMY|1,
+				bl->m, bl->x - ar, bl->y - ar, bl->x + ar, bl->y + ar, (BL_CHAR | BL_SKILL),
+				src, skillid, skilllv, tick, flag | BCT_ENEMY | 1,
 				skill_castend_damage_id);
 		}
 		break;
@@ -5786,20 +5788,24 @@ int skill_castend_damage_id( struct block_list* src, struct block_list *bl,int s
 		}
 		break;
 	case GN_CARTCANNON:		/* カートキャノン */
-		if(flag&1) {
+		if (flag & 1) {
 			/* 個別にダメージを与える */
-			if(bl->id != skill_area_temp[1])
-				battle_skill_attack(BF_WEAPON,src,src,bl,skillid,skilllv,tick,flag);
-		} else {
-			int ar = skill_get_area(skillid,skilllv);
+			if (bl->id != skill_area_temp[1])
+				battle_skill_attack(BF_WEAPON, src, src, bl, skillid, skilllv, tick, flag);
+		}
+		else {
+			int ar = skill_get_area(skillid, skilllv);
+			if (sd) {
+				int cost = skill_get_arrow_cost(skillid, skilllv);
+				if (cost > 0 && !battle_delarrow(sd, cost, skillid))	// 矢の消費
+					break;
+			}
 			skill_area_temp[1] = bl->id;
-			clif_skill_nodamage(src,bl,skillid,skilllv,1);
 			/* まずターゲットに攻撃を加える */
-			battle_skill_attack(BF_WEAPON,src,src,bl,skillid,skilllv,tick,0);
-			/* その後ターゲット以外の範囲内の敵全体に処理を行う */
+			battle_skill_attack(BF_WEAPON, src, src, bl, skillid, skilllv, tick, 0);
 			map_foreachinarea(skill_area_sub,
-				bl->m,bl->x-ar,bl->y-ar,bl->x+ar,bl->y+ar,(BL_CHAR|BL_SKILL),
-				src,skillid,skilllv,tick, flag|BCT_ENEMY|1,
+				bl->m, bl->x - ar, bl->y - ar, bl->x + ar, bl->y + ar, (BL_CHAR | BL_SKILL),
+				src, skillid, skilllv, tick, flag | BCT_ENEMY | 1,
 				skill_castend_damage_id);
 		}
 		break;
@@ -6953,6 +6959,7 @@ int skill_castend_damage_id( struct block_list* src, struct block_list *bl,int s
 				status_change_start(src,GetSkillStatusChangeTable(skillid),count+1,0,0,0,skill_get_time(skillid,skilllv),0);
 			} else {
 				status_change_start(src,GetSkillStatusChangeTable(skillid),count,0,0,0,skill_get_time(skillid,skilllv),0);
+				unit_heal(src, 0, 0, 2, 1);
 			}
 		} else {
 			status_change_start(src,GetSkillStatusChangeTable(skillid),1,0,0,0,skill_get_time(skillid,skilllv),0);
@@ -14846,12 +14853,12 @@ int skill_castend_pos2( struct block_list *src, int x,int y,int skillid,int skil
 	case AG_ASTRAL_STRIKE:		/* アストラルストライク */
 		{
 
-			skill_unitsetting(src,skillid,skilllv,x,y,0);
 			int ar = skill_get_area(AG_ASTRAL_STRIKE_ATK, skilllv);
 			map_foreachinarea(skill_area_sub,
 				src->m, x - ar, y - ar, x + ar, y + ar, (BL_CHAR | BL_SKILL),
 				src, AG_ASTRAL_STRIKE_ATK, skilllv, tick, flag | BCT_ENEMY | 1,
 				skill_castend_damage_id);
+			skill_unitsetting(src, skillid, skilllv, x, y, 0);
 		}
 		break;
 	case NW_WILD_FIRE:		/* ワイルドファイア */
@@ -16140,9 +16147,6 @@ static int skill_unit_onplace_timer(struct skill_unit *src,struct block_list *bl
 		break;
 	case UNT_MAGNUS:	/* マグヌスエクソシズム */
 		{
-			int race = status_get_race(bl);
-			if (!battle_check_undead(race,status_get_elem_type(bl)) && race != RCT_DEMON)
-				return 0;
 			battle_skill_attack(BF_MAGIC,ss,&src->bl,bl,sg->skill_id,sg->skill_lv,tick,0);
 			src->val2++;
 		}
@@ -16881,8 +16885,8 @@ static int skill_unit_onplace_timer(struct skill_unit *src,struct block_list *bl
 		}
 		break;
 	case UNT_ASTRAL_STRIKE:		/* アストラルストライク */
-		if(DIFF_TICK(tick,sg->tick) >= 500) {	// 設置直後は攻撃なし
-			battle_skill_attack(BF_MAGIC,ss,&src->bl,bl,sg->skill_id,sg->skill_lv,tick,0);
+		if (DIFF_TICK(tick, sg->tick) >= 500) {	// 設置直後は攻撃なし
+			battle_skill_attack(BF_MAGIC, ss, &src->bl, bl, sg->skill_id, sg->skill_lv, tick, 0);
 		}
 		break;
 	case UNT_ABYSS_SQUARE:		/* アビススクエア */
@@ -18081,6 +18085,8 @@ static int skill_check_condition2_pc(struct map_session_data *sd, struct skill_c
 		case NC_MAGMA_ERUPTION:		//マグマイラプション
 		// マイスター追加スキル
 		case MT_MIGHTY_SMASH:		// マイティスマッシュ
+		case MT_SPARK_BLASTER:		// スパークブラスター	れもん追加
+		case MT_TRIPLE_LASER:		// トリプルレーザー		れもん追加
 		// その他
 		case AL_TELEPORT:			// テレポート
 		case ALL_BUYING_STORE:		// 買取露店開設
@@ -19202,14 +19208,14 @@ static int skill_check_condition2_pc(struct map_session_data *sd, struct skill_c
 		}
 		break;
 	case SO_POISON_BUSTER:	/* ポイズンバスター */
-		if(target) {
-			struct status_change *sc = status_get_sc(target);
-
-			if(sc && sc->data[SC_POISON].timer == -1) {
-				clif_skill_fail(sd,cnd->id,SKILLFAIL_FAILED,0,0);
-				return 0;
-			}
-		}
+//		if(target) {
+//			struct status_change *sc = status_get_sc(target);
+//
+//			if(sc && sc->data[SC_POISON].timer == -1) {
+//				clif_skill_fail(sd,cnd->id,SKILLFAIL_FAILED,0,0);
+//				return 0;
+//			}
+//		}
 		break;
 	case SO_ARRULLO:	/* アルージョ */
 		if(!map[bl->m].flag.gvg && !map[bl->m].flag.pvp) {

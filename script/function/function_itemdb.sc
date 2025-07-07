@@ -1,10 +1,6 @@
-//==============================================================================
-// Ragnarok Online Itemdb Functions
-//==============================================================================
+//2025/05/07 更新
 
-//============================================================
 // 巨大なハエの羽
-//------------------------------------------------------------
 function	script	ItemdbPartyCall	{
 	warp "Random",0,0;
 	set '@name$,strcharinfo(0);
@@ -29,65 +25,57 @@ function	script	ItemdbPartyCall	{
 
 //============================================================
 // キラキラスティック
-//------------------------------------------------------------
 function	script	ItemdbResetSkill	{
 	if(Weight || checkcart() || checkfalcon() || checkriding())
 		return;
-	resetskill;		// クエストスキル・基本スキルはリセットしない
-
-	return;
-}
-
-//============================================================
-// ヒール系効果向上総合
-//------------------------------------------------------------
-function	script	ItemdbAlmightyHeal	{
-	set '@flag,getarg(0);
-	set '@val,getarg(1);
-	if('@flag&1) {
-		bonus2 bAddSkillHealRate,28,'@val;	/* ヒール */
-		bonus2 bAddSkillDamageRate,28,'@val;
-	}
-	if('@flag&2) {
-		bonus2 bAddSkillHealRate,70,'@val;	/* サンクチュアリ */
-		bonus2 bAddSkillDamageRate,70,'@val;
-	}
-	if('@flag&4)
-		bonus2 bAddSkillHealRate,231,'@val;	/* ポーションピッチャー */
-	if('@flag&8)
-		bonus2 bAddSkillHealRate,478,'@val;	/* スリムポーションピッチャー */
-	if('@flag&16)
-		bonus2 bAddSkillHealRate,322,'@val;	/* イドゥンの林檎 */
-	if('@flag&32) {
-		bonus2 bAddSkillHealRate,2043,'@val;	/* コルセオヒール */
-		bonus2 bAddSkillDamageRate,2043,'@val;
-	}
-	if('@flag&64) {
-		bonus2 bAddSkillHealRate,2051,'@val;	/* ハイネスヒール */
-		bonus2 bAddSkillDamageRate,2051,'@val;
+	set '@lv,getskilllv(1);	// 基本スキル
+	resetskill 0;		// クエストスキルはリセットしない
+	if('@lv > 0) {
+		skill 1,'@lv,0;
+		set SkillPoint,SkillPoint - '@lv;
 	}
 	return;
 }
 
 //============================================================
-// 被ヒール系効果向上総合
-//------------------------------------------------------------
-function	script	ItemdbAlmightySubHeal	{
-	set '@flag,getarg(0);
-	set '@val,getarg(1);
-	if('@flag&1)
-		bonus2 bAddSkillSubHealRate,28,'@val;	/* ヒール */
-	if('@flag&2)
-		bonus2 bAddSkillSubHealRate,70,'@val;	/* サンクチュアリ */
-	if('@flag&4)
-		bonus2 bAddSkillSubHealRate,231,'@val;	/* ポーションピッチャー */
-	if('@flag&8)
-		bonus2 bAddSkillSubHealRate,478,'@val;	/* スリムポーションピッチャー */
-	if('@flag&16)
-		bonus2 bAddSkillSubHealRate,322,'@val;	/* イドゥンの林檎 */
-	if('@flag&32)
-		bonus2 bAddSkillSubHealRate,2043,'@val;	/* コルセオヒール */
-	if('@flag&64)
-		bonus2 bAddSkillSubHealRate,2051,'@val;	/* ハイネスヒール */
+//[ヒール系スキル使用時HP回復量 + n%] 全種一括指定
+//{ calllfunc "AddSkillHealRate",'@val; }
+
+function	script	AddSkillHealRate	{
+	set '@val,getarg(0);
+		bonus2 bAddSkillHealRate,"AL_HEAL",'@val;	/* ヒール */
+		bonus2 bAddSkillHealRate,"PR_SANCTUARY",'@val;	/* サンクチュアリ */
+		bonus2 bAddSkillHealRate,"AM_POTIONPITCHER",'@val;	/* ポーションピッチャー */
+		bonus2 bAddSkillHealRate,"CR_SLIMPITCHER",'@val;	/* スリムポーションピッチャー */
+		bonus2 bAddSkillHealRate,"BA_APPLEIDUN",'@val;	/* イドゥンの林檎 */
+		bonus2 bAddSkillHealRate,"AB_CHEAL",'@val;	/* コルセオヒール */
+		bonus2 bAddSkillHealRate,"AB_HIGHNESSHEAL",'@val;	/* ハイネスヒール */
+		bonus2 bAddSkillHealRate,"CD_MEDIALE_VOTUM",'@val;	/* メディアリボトゥム */
+
+		bonus2 bAddSkillDamageRate,"AL_HEAL",'@val;	/* ヒール */
+		bonus2 bAddSkillDamageRate,"PR_SANCTUARY",'@val;	/* サンクチュアリ */
+		bonus2 bAddSkillDamageRate,"AB_CHEAL",'@val;	/* コルセオヒール */
+		bonus2 bAddSkillDamageRate,"AB_HIGHNESSHEAL",'@val;	/* ハイネスヒール */
+		bonus2 bAddSkillDamageRate,"CD_MEDIALE_VOTUM",'@val;	/* メディアリボトゥム */
 	return;
 }
+
+//============================================================
+//[ヒール系スキルを受けた時のHP回復量 + n%] 全種一括指定
+//{ calllfunc "AddSkillSubHealRate",'@val; }
+
+function	script	AddSkillSubHealRate	{
+	set '@val,getarg(0);
+		bonus2 bAddSkillSubHealRate,"AL_HEAL",'@val;	/* ヒール */
+		bonus2 bAddSkillSubHealRate,"PR_SANCTUARY",'@val;	/* サンクチュアリ */
+		bonus2 bAddSkillSubHealRate,"AM_POTIONPITCHER",'@val;	/* ポーションピッチャー */
+		bonus2 bAddSkillSubHealRate,"CR_SLIMPITCHER",'@val;	/* スリムポーションピッチャー */
+		bonus2 bAddSkillSubHealRate,"BA_APPLEIDUN",'@val;	/* イドゥンの林檎 */
+		bonus2 bAddSkillSubHealRate,"AB_CHEAL",'@val;	/* コルセオヒール */
+		bonus2 bAddSkillSubHealRate,"AB_HIGHNESSHEAL",'@val;	/* ハイネスヒール */
+		bonus2 bAddSkillSubHealRate,"CD_MEDIALE_VOTUM",'@val;	/* メディアリボトゥム */
+		/* bonus2 bAddItemHealRate,'@val;	一部のアイテムの回復量 */
+	return;
+}
+
+

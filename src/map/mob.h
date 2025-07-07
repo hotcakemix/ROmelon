@@ -57,7 +57,6 @@ struct mobdb_data {
 	int str,agi,vit,int_,dex,luk;
 	int range,range2,range3;
 	short size,race;
-	int dscale;		//れもん追加ダメージスケール
 	int element,mode,mode_opt[MAX_MODE_OPT];
 	int speed,adelay,amotion,dmotion;
 	int mexp,mexpper;

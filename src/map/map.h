@@ -45,7 +45,7 @@
 #define MAX_MOBGROUP	13
 #define MAX_ITEMGROUP	15
 #define MAX_EFF_TYPE	16	// アイテムボーナスの状態異常の数
-#define MAX_SKILL_DAMAGE_UP	10	// スキルを強化できる数
+#define MAX_SKILL_DAMAGE_UP	20	// スキルを強化できる数
 #define MAX_SUB_SKILL_DAMAGE	10	// スキル耐性を強化できる数
 #define MAX_SKILL_BLOW  5		// スキルを吹き飛ばし化
 #define MAX_SKILL_HEAL_UP	7	// スキルの回復量を強化できる数
@@ -78,6 +78,10 @@
 #define MAX_STELLAR_MARKS 5 // 星の印の最大保存数
 #define MAX_SOULENERGY 20	// ソウルエナジー最大数
 #define MAX_BALL 5	// 球体最大数
+
+#define MAX_EXPBARTER_ITEM 5
+
+#define MAX_ACTIVE_SETS 3
 
 #ifndef DEFAULT_AUTOSAVE_INTERVAL
 #define DEFAULT_AUTOSAVE_INTERVAL 60*1000
@@ -467,6 +471,8 @@ struct map_session_data {
 
 	int char_id,login_id1,login_id2,sex;
 	struct item_data *inventory_data[MAX_INVENTORY];
+	struct set_bonus *set_bonus;
+	int active_setids[MAX_ACTIVE_SETS]; // 発動中のセットID記録
 	struct linkdb_node *inventory_timer;
 	unsigned int inventory_sortkey;
 	unsigned int cart_sortkey;
@@ -954,12 +960,12 @@ struct npc_label_list {
 };
 
 struct npc_expbarter_item {
-	int nameid, amount, refine;
+	int nameid, refine, amount;
 };
 
 struct npc_item_list {
 	int nameid,value,value2,qty;	//barter value=nameid, value2=amount	れもん追加value2
-	struct npc_expbarter_item *expbarter_item;		//れもん追加 barter複数アイテム要求精錬値も
+	struct npc_expbarter_item expbarter_item[MAX_EXPBARTER_ITEM];		//れもん追加 barter複数アイテム要求精錬値も
 };
 
 struct npc_data {

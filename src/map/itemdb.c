@@ -38,6 +38,8 @@
 #include "script.h"
 #include "pc.h"
 
+#include "setbonus.h"	//れもん追加
+
 // ** ITEMDB_OVERRIDE_NAME_VERBOSE **
 //   定義すると、itemdb.txtとgrfで名前が異なる場合、表示します.
 //#define ITEMDB_OVERRIDE_NAME_VERBOSE	1
@@ -170,8 +172,10 @@ struct randopt_item_data itemdb_randopt_data(int mobid, int nameid)
  */
 int itemdb_barter_item(int barter_id)
 {
-	for (int i = 0; i < MAX_BARTER_ENTRY; i++) {
-		if (barter_item[i].barter_id == barter_id)
+	int i;
+
+	for (i = 0; i < MAX_BARTER_ENTRY; i++) {
+		if (barter_id == barter_item[i].barter_id)
 			return 1;
 	}
 	return 0;
@@ -183,9 +187,11 @@ int itemdb_barter_item(int barter_id)
  */
 int itemdb_expbarter_item(int barter_id)
 {
-	for (int i = 0; i < MAX_EXPBARTER_ENTRY; i++) {
-		if (expbarter_item[i].barter[0].nameid > 0) { // 中身があれば
-			if (expbarter_item[i].barter_id == barter_id)
+	int i;
+
+	for (i = 0; i < MAX_EXPBARTER_ENTRY; i++) {
+		if (expbarter_item[i].expbarter[0].nameid > 0) { // 中身があれば
+			if (barter_id == expbarter_item[i].barter_id)
 				return 1;
 		}
 	}
@@ -198,12 +204,13 @@ int itemdb_expbarter_item(int barter_id)
  */
 struct barter_item_data itemdb_barter_data(int barter_id)
 {
+	int i;
 	struct barter_item_data bi;
 
 	memset(&bi, 0, sizeof(bi));
 
-	for (int i = 0; i < MAX_BARTER_ENTRY; i++) {
-		if (barter_item[i].barter_id == barter_id)
+	for (i = 0; i < MAX_BARTER_ENTRY; i++) {
+		if (barter_id == barter_item[i].barter_id)
 			return barter_item[i];
 	}
 	return bi;
@@ -215,13 +222,14 @@ struct barter_item_data itemdb_barter_data(int barter_id)
  */
 struct barter_item_data itemdb_expbarter_data(int barter_id)
 {
+	int i;
 	struct barter_item_data bi;
 
 	memset(&bi, 0, sizeof(bi));
 
-	for (int i = 0; i < MAX_EXPBARTER_ENTRY; i++) {
-		if (expbarter_item[i].barter[0].nameid > 0) { // 中身があれば
-			if (expbarter_item[i].barter_id == barter_id)
+	for (i = 0; i < MAX_EXPBARTER_ENTRY; i++) {
+		if (expbarter_item[i].expbarter[0].nameid > 0) { // 中身があれば
+			if (barter_id == expbarter_item[i].barter_id)
 				return expbarter_item[i];
 		}
 	}
@@ -964,6 +972,52 @@ static int itemdb_read_itemdb(void)
 	return 0;
 }
 
+
+/*==========================================
+ * れもん追加barterDBの初期化
+ *------------------------------------------
+ */
+static void itemdb_init_barterdb(void)
+{
+	barter_count = 0;
+	memset(&barter_item, 0, sizeof(barter_item));
+	return;
+}
+/*==========================================
+ * れもん追加barterDBの初期化
+ *------------------------------------------
+ */
+static void itemdb_init_expbarterdb(void)
+{
+	expbarter_count = 0;
+	memset(&expbarter_item, 0, sizeof(expbarter_item));
+	return;
+}
+
+/*==========================================
+ * れもん追加barterDBの登録
+ *------------------------------------------
+ */
+bool itemdb_insert_barterdb(struct barter_item_data bi)
+{
+	if (bi.expbarter[0].nameid > 0) { // expbarter_count == 0 の時、expbarterは空とみなせる。
+		if (expbarter_count >= MAX_EXPBARTER_ENTRY) {
+			return false;
+		}
+		expbarter_item[expbarter_count] = bi;
+		expbarter_count++;
+	}
+	else {
+		if (barter_count >= MAX_BARTER_ENTRY) {
+			return false;
+		}
+		barter_item[barter_count] = bi;
+		barter_count++;
+	}
+	printf("\rread db/item_barter_db.lua barter done (count=%d) expbarter done (count=%d)", barter_count, expbarter_count);
+	return true;
+}
+
 /*==========================================
  * アイテム価格テーブルのオーバーライド
  *------------------------------------------
@@ -1238,19 +1292,6 @@ bool itemdb_insert_randoptdb(struct randopt_item_data ro)
 }
 
 /*==========================================
- * れもん追加barterDBの初期化
- *------------------------------------------
- */
-static void itemdb_init_barterdb(void)
-{
-	barter_count = 0;
-	memset(&randopt_item, 0, sizeof(randopt_item));
-	return;
-}
-
-
-
-/*==========================================
  * デバッガ
  *------------------------------------------
  */
@@ -1345,6 +1386,9 @@ void itemdb_reload(void)
 int do_init_itemdb(void)
 {
 	item_db = numdb_init();
+	itemdb_init_barterdb();		//れもん追加
+	itemdb_init_expbarterdb();	//れもん追加
+	itemdb_init_setbonusdb();	//れもん追加
 	itemdb_init_randoptdb();
 	itemdb_read();
 

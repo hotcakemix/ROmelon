@@ -1,5 +1,5 @@
 //skill_db.txt＠AthenaDB計画 2005/04/14 00:00:00 +0900 (JST)
-//id,range,hit,inf,pl,nk,max,list_num,castcancel,cast_defence_rate,inf2,maxcount,skill_type,blow_count,area,heal_ap
+//id,range,hit,inf,pl,nk,max,list_num,castcancel,cast_defence_rate,inf2,maxcount,skill_type,blow_count,area,heal_ap,name,jname
 1,0,0,0,0,0,9,0,no,0,0,0,none,0,0,0,NV_BASIC,基本スキル
 2,0,0,0,0,0,10,0,no,0,0,0,weapon,0,0,0,SM_SWORD,剣修練
 3,0,0,0,0,0,10,0,no,0,0,0,weapon,0,0,0,SM_TWOHAND,両手剣修練
@@ -1102,7 +1102,7 @@
 2474,0,0,0,0,0,5,0,no,0,0,0,none,0,0,0,GN_TRAINING_SWORD,剣鍛錬
 2475,0,0,0,0,0,5,0,no,0,0,0,none,0,0,0,GN_REMODELING_CART,カート改造
 2476,0,8,4,0,0,10,3,yes,0,0,0,weapon,0,2:2:2:2:2:2:2:2:2:3,0,GN_CART_TORNADO,カートトルネード
-2477,7:8:9:10:11,6,1,0,0,5,1,yes,0,0,0,weapon,0,1:1:2:2:3,0,GN_CARTCANNON,カートキャノン
+2477,7:8:9:10:11,8,1,0,0,5,1,yes,0,0,0,weapon,0,1:1:2:2:3,0,GN_CARTCANNON,カートキャノン
 2478,0,6,4,0,1,5,1,yes,0,0,0,weapon,0,0,0,GN_CARTBOOST,改造カートブースト
 2479,9,6,2,0,0,5,1,yes,0,0,3,misc,0,0,0,GN_THORNS_TRAP,ソーントラップ
 2480,11,6,1,0,1,5,1,yes,0,0,0,misc,0,0,0,GN_BLOOD_SUCKER,ブラッドサッカー
@@ -1363,7 +1363,7 @@
 5227,9,6,2,4,0,5,1,yes,0,0,0,magic,0,0,0,AG_TORNADO_STORM,トルネードストーム
 5228,0,0,0,0,0,10,0,yes,0,0,0,none,0,0,0,AG_TWOHANDSTAFF,両手杖修練
 5229,9,6,2,3,0,5,1,yes,0,0,0,magic,0,4,0,AG_FLORAL_FLARE_ROAD,フローラルフレアロード
-5230,9,5,2,0,0,10,1,yes,0,0,0,magic,0,0,0,AG_ASTRAL_STRIKE,アストラルストライク
+5230,9,6,2,0,0,10,1,yes,0,0,0,magic,0,0,0,AG_ASTRAL_STRIKE,アストラルストライク
 5231,0,6,1,0,0,10,1,yes,0,0,0,magic,0,2:2:2:3:3:3:4:4:4:5,0,AG_ASTRAL_STRIKE_ATK,アストラルストライク(初撃)
 5232,0,6,4,0,1,5,1,yes,0,0,0,magic,0,0,0,AG_CLIMAX,クライマックス
 5233,9,8,1,2,0,5,5,yes,0,0,0,magic,0,2:2:2:3:3,2,AG_ROCK_DOWN,ロックダウン
@@ -1481,7 +1481,7 @@
 5331,1,6,2,7,1,5,1,yes,0,0,3,weapon,0,0,0,WH_DEEPBLINDTRAP,ディープブラインドトラップ
 5332,1,6,2,2,1,5,1,yes,0,0,3,weapon,0,0,0,WH_SOLIDTRAP,ソリッドトラップ
 5333,1,6,2,4,1,5,1,yes,0,0,3,weapon,0,0,0,WH_SWIFTTRAP,スイフトトラップ
-5334,5,6,1,0,0,10,1,yes,0,0,0,weapon,0,0,0,WH_CRESCIVE_BOLT,クレッシブボルト
+5334,5,6,1,0,0,10,1,yes,0,0,0,weapon,0,0,2:2:2:2:2:3:3:3:3:3,WH_CRESCIVE_BOLT,クレッシブボルト
 5335,1,6,2,3,1,5,1,yes,0,0,3,weapon,0,0,0,WH_FLAMETRAP,フレイムトラップ
 
 // バイオロ

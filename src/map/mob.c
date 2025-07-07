@@ -2047,12 +2047,6 @@ int mob_damage(struct block_list *src,struct mob_data *md,int damage,int type)
 		return 0;
 	}
 
-	//れもん追加ダメージスケール
-	struct mobdb_data* mob_info = mobdb_search(md->class_);
-	if (mob_info && mob_info->dscale > 0) {
-		damage = (damage + (mob_info->dscale / 2)) / mob_info->dscale;
-	}
-	
 
 	if(md->hp <= 0) {
 		if(md->bl.prev != NULL) {
@@ -2408,7 +2402,7 @@ static int mob_dead(struct block_list *src,struct mob_data *md,int type,unsigned
 			if( tmpbl[i]->type == BL_HOM ) {
 				struct homun_data *thd = (struct homun_data *)tmpbl[i];
 				if(thd)
-					homun_gainexp(thd, md, base_exp, job_exp);
+					homun_md_gainexp(thd, md, base_exp, job_exp);
 			}
 			else if( tmpbl[i]->type == BL_MERC ) {
 				struct merc_data *tmcd = (struct merc_data *)tmpbl[i];
@@ -2453,6 +2447,12 @@ static int mob_dead(struct block_list *src,struct mob_data *md,int type,unsigned
 				if( (tmpsd->sc.data[SC_TRICKDEAD].timer == -1 || !battle_config.noexp_trickdead) && 	// 死んだふりしていない
 				    (tmpsd->sc.data[SC_HIDING].timer == -1    || !battle_config.noexp_hiding) )		// ハイドしていない
 					pc_gainexp(tmpsd, md, base_exp, job_exp, 0);
+			}
+			if ((base_exp > 0 || job_exp > 0) && sd && sd->hd) { // 経験値があり、かつホムが存在
+				struct homun_data* thd = sd->hd;
+				atn_bignumber shared_base = base_exp / 10;
+				atn_bignumber shared_job = job_exp / 10;
+				homun_gainexp(thd, md, shared_base, shared_job);
 			}
 		}
 		// 公平分配
@@ -2507,15 +2507,14 @@ static int mob_dead(struct block_list *src,struct mob_data *md,int type,unsigned
 		if (sd && mdd && abs(sd->status.base_level - mdd->lv) <= 30) {
 			int drop_chance = 500; // 基本確率（500 = 5.0%）
 			struct delay_item_drop* ditem;
-
-			// レベルが100以上ならドロップ確率を+50%
-			if (sd->status.base_level >= 100) drop_chance = (drop_chance * 150) / 100;
-			// レベル200以上ならさらに+50%
-			if (sd->status.base_level >= 200) drop_chance = (drop_chance * 150) / 100;
+			
+			if (sd->status.base_level > 99) drop_chance = 1000; // lv100から10%
+			
+			if (sd->status.base_level > 200) drop_chance = 2000; //	lv201から20%
 
 			if (drop_chance > atn_rand() % 10000) {
 				ditem = (struct delay_item_drop*)aCalloc(1, sizeof(struct delay_item_drop));
-				ditem->nameid = 1000500;
+				ditem->nameid = 920000;
 				ditem->amount = 1;
 				ditem->m = md->bl.m;
 				ditem->x = md->bl.x;
@@ -2524,7 +2523,7 @@ static int mob_dead(struct block_list *src,struct mob_data *md,int type,unsigned
 				ditem->second_id = (mvp[1].bl) ? mvp[1].bl->id : 0;
 				ditem->third_id = (mvp[2].bl) ? mvp[2].bl->id : 0;
 				ditem->randopt = 0;
-				add_timer2(tick + 520 + i, mob_delay_item_drop, 0, ditem);
+				add_timer2(tick + 540 + i, mob_delay_item_drop, 0, ditem);
 			}
 		}
 		//れもん追加ここまで
@@ -4520,59 +4519,6 @@ static int mob_readdb(void)
 	return 0;
 }
 
-//れもん追加　ダメージスケール
-static int mob_damage_scale(void)
-{
-	FILE* fp;
-	char line[1024];
-	int  ln = 0;
-	int	 class_,scale_,i;
-	char *str[3], * p;
-	struct mobdb_data *id;
-	const char* filename = "db/mob_damage_scale.txt";
-
-	if ((fp = fopen(filename, "r")) == NULL) {
-		printf("mob_damage_scale: open [%s] failed !\n", filename);
-		return -1;
-	}
-
-	while (fgets(line, 1024, fp)) {
-		if (line[0] == '\0' || line[0] == '\r' || line[0] == '\n')
-			continue;
-		if (line[0] == '/' && line[1] == '/')
-			continue;
-		memset(str, 0, sizeof(str));
-
-		for (i = 0, p = line; i < 3 && p; i++) {
-			str[i] = p;
-			p = strchr(p, ',');  // `,` の位置を探す
-			if (p) *p++ = 0;  // `,` を `\0` に変えて次の文字へ
-		}
-		if (str[0] == NULL || str[2] == NULL)
-			continue;
-
-		class_ = atoi(str[0]);
-		if (!mobdb_exists(class_))	// 値が異常なら処理しない。
-			continue;
-
-		scale_ = atoi(str[2]);
-		if (scale_ > 1000) {
-			scale_ = 1000;
-		}
-
-		id = mobdb_search(class_);
-
-		if (id) {
-			id->dscale = scale_;
-			ln++;
-		}
-	}
-	fclose(fp);
-	printf("read %s done (count=%d)\n", filename, ln);
-
-	return 0;
-}
-
 /*==========================================
  * MOB表示グラフィック変更データ読み込み
  *------------------------------------------
@@ -5162,7 +5108,6 @@ void mob_reload(void)
 	mob_readtalkdb();
 	mob_readskilldb();
 	mob_readmobmodedb();
-	mob_damage_scale();		//れもん追加 ダメージスケール
 }
 
 /*==========================================
@@ -5181,7 +5126,6 @@ int do_init_mob(void)
 	mob_readtalkdb();
 	mob_readskilldb();
 	mob_readmobmodedb();
-	mob_damage_scale();		//れもん追加 ダメージスケール
 
 	add_timer_func_list(mob_delayspawn);
 	add_timer_func_list(mob_delay_item_drop);

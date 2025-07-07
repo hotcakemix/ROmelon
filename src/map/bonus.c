@@ -500,6 +500,15 @@ int bonus_param1(struct map_session_data *sd,int type,int val)
 			sd->parame[5] += val;
 		}
 		break;
+	case SP_POW:
+	case SP_STA:
+	case SP_WIS:
+	case SP_SPL:
+	case SP_CON:
+	case SP_CRT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[type - 213] += val;
+		break;
 	case SP_ATK1:
 		if(!sd->state.lr_flag)
 			sd->watk += val;

@@ -92,7 +92,7 @@ static int homun_tostr(char *str, struct mmo_homunstatus *h)
 	else if(h->intimate > 100000)
 		h->intimate = 100000;
 
-	str_p += sprintf(str, "%d,%d,%s\t%d,%d\t%d,%d,%d,%d,%d,%d\t%d,%d,%d,%d,%d,%d\t%d,%d,%d,%d,%d,%d\t%d,%d\t%d,%d,%d,%d,%d",
+	str_p += sprintf(str, "%d,%d,%s\t%d,%d\t%d%I64d,%d,%d,%d,%d\t%d,%d,%d,%d,%d,%d\t%d,%d,%d,%d,%d,%d\t%d,%d\t%d,%d,%d,%d,%d",
 		h->homun_id,h->class_,h->name,
 		h->account_id,h->char_id,
 		h->base_level,h->base_exp,h->max_hp,h->hp,h->max_sp,h->sp,

@@ -48,3 +48,93 @@ prontera.gat,150,160,4	script	itemaopt	89,{
 	mes "アイテムを生成しました！";
 	close;
 }
+
+
+
+
+
+
+prontera.gat,150,140,4	script	homus	89,{
+		mes "変異システムを通じて";
+		mes "新しい^FF4800ホムンクルス^000000へ変異するには、";
+		mes "今のホムンクルスを";
+		mes "^0000FFエンブリオ^000000状態に";
+		mes "戻さなければなりません。";
+		next;
+				mes "では、選択してください。";
+		mes "^0000FF変異システム^000000を通じて、";
+		mes "新しいホムンクルスに変異させますか？";
+		next;
+		if(select("やる","やらない") == 2) {
+			musiceffect "28";
+			emotion 54;
+			mes "[ジェイナ]";
+			mes "……。";
+			mes "質問をしない方が";
+			mes "よかったかもしれませんね。";
+			close;
+		}
+		if(gethomuninfo(5)==0) {
+			mes "[ジェイナ]";
+			mes "あっ、待ってください。";
+			mes "変異を行うには";
+			mes "安息状態のホムンクルスを";
+			mes "起こさなければなりません。";
+			next;
+			mes "[ジェイナ]";
+			mes "コールホムンクルスを行い、";
+			mes "ホムンクルスを起こしてから";
+			mes "再度来てください。";
+			close;
+		}
+		mes "もうすぐ^FF4800ホムンクルス^000000が";
+		mes "エンブリオ状態に戻ります。";
+		mes "少し……特別な……";
+		mes "エンブリオ状態に……。";
+		morphembryo;
+		next;
+		mes "それでは、";
+		mes "^0000FFホムンクルス^000000を";
+		mes "どの種類に変異させるか";
+		mes "選択してくれ。";
+			while(1) {
+				next;
+				switch(select("少し待ってほしい","エイラ","セラ","ディーター","バイエリー","エレノア")) {
+				case 1:
+					mes "[ビオレル]";
+					mes "大事な選択だからな。";
+					mes "ゆっくり考えてくれていいぞ。";
+					continue;
+				case 2: set '@card$,"Mer_Eira_Card.bmp";	set '@name$,"エイラ";		set '@homun_id,6048; break;
+				case 3: set '@card$,"Mer_Sera_Card.bmp";	set '@name$,"セラ";			set '@homun_id,6050; break;
+				case 4: set '@card$,"Mer_Dieter_Card.bmp";	set '@name$,"ディーター";	set '@homun_id,6051; break;
+				case 5: set '@card$,"Mer_Bayeri_Card.bmp";	set '@name$,"バイエリー";	set '@homun_id,6049; break;
+				case 6: set '@card$,"Mer_Eleanor_Card.bmp";	set '@name$,"エレノア";		set '@homun_id,6052; break;
+				}
+				cutin '@card$, 3;
+				mes "[ビオレル]";
+				mes '@name$+ "だな？";
+				next;
+				if(select("それでいい","違う") == 2) {
+					cutin '@card$, 255;
+					musiceffect "05";
+					mes "[ビオレル]";
+					mes "そうか。";
+					mes "では、もう一度よく考えてくれ。";
+					close;
+				}
+				break;
+			}
+			next;
+					misceffect 248,"";
+		mes "[ビオレル]";
+		mes "よし。もう少しで終わる！";
+		next;
+		homunmutation '@homun_id;
+				mes "[ビオレル]";
+		mes "最後に、";
+		mes "新しい^FF4800ホムンクルス^000000との冒険は";
+		mes "これからが始まりだ。";
+		mes "いい旅を！";
+		close;
+}

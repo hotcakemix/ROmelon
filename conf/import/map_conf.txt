@@ -87,3 +87,4 @@ map: jro_kuma.gat
 map: wnb_b_01.gat
 
 map: ori0001.gat
+

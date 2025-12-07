@@ -529,6 +529,10 @@ int bonus_param1(struct map_session_data *sd,int type,int val)
 			sd->plus_atk += val;
 #endif
 		break;
+	case SP_PATK:
+		if (sd->state.lr_flag != 2)
+			sd->patk += val;
+		break;
 	case SP_MATK1:
 		if(sd->state.lr_flag != 2)
 			sd->matk1 += val;
@@ -547,6 +551,10 @@ int bonus_param1(struct map_session_data *sd,int type,int val)
 #endif
 		}
 		break;
+	case SP_SMATK:
+		if (sd->state.lr_flag != 2)
+			sd->smatk += val;
+		break;
 	case SP_DEF1:
 		if(sd->state.lr_flag != 2)
 			sd->def += val;
@@ -558,6 +566,14 @@ int bonus_param1(struct map_session_data *sd,int type,int val)
 	case SP_MDEF2:
 		if(sd->state.lr_flag != 2)
 			sd->mdef2 += val;
+		break;
+	case SP_RES:
+		if (sd->state.lr_flag != 2)
+			sd->res += val;
+		break;
+	case SP_MRES:
+		if (sd->state.lr_flag != 2)
+			sd->mres += val;
 		break;
 	case SP_HIT:
 		if(sd->state.lr_flag != 2)
@@ -578,6 +594,14 @@ int bonus_param1(struct map_session_data *sd,int type,int val)
 			sd->critical += val*10;
 		else
 			sd->arrow_cri += val*10;
+		break;
+	case SP_CRATE:
+		if (sd->state.lr_flag != 2)
+			sd->crate += val;
+		break;
+	case SP_HPLUS:
+		if (sd->state.lr_flag != 2)
+			sd->hplus += val;
 		break;
 	case SP_ATKELE:
 		if(!sd->state.lr_flag)
@@ -947,6 +971,10 @@ int bonus_param1(struct map_session_data *sd,int type,int val)
 	case SP_MAGIC_DAMAGE_RETURN:
 		if(sd->state.lr_flag != 2)
 			sd->magic_damage_return += val;
+		break;
+	case SP_SUB_RETURN_DAMAGE:
+		if (sd->state.lr_flag != 2)
+			sd->sub_return_damage += val;
 		break;
 	case SP_ADD_SHORT_WEAPON_DAMAGE:
 		if(sd->state.lr_flag != 2)
@@ -1658,6 +1686,24 @@ int bonus_param2(struct map_session_data *sd,int type,int type2,int val)
 		sd->skill_addcast.id[sd->skill_addcast.count] = type2;
 		sd->skill_addcast.time[sd->skill_addcast.count] = val;
 		sd->skill_addcast.count++;
+		break;
+	case SP_ADD_FIXCAST_TIME:
+		// update
+		for (i = 0; i < sd->skill_addfixcast.count; i++)
+		{
+			if (sd->skill_addfixcast.id[i] == type2)
+			{
+				sd->skill_addfixcast.time[i] += val;
+				return 0;
+			}
+		}
+		// full
+		if (sd->skill_addfixcast.count == MAX_SKILL_ADDFIXCASTTIME)
+			break;
+		// add
+		sd->skill_addfixcast.id[sd->skill_addfixcast.count] = type2;
+		sd->skill_addfixcast.time[sd->skill_addfixcast.count] = val;
+		sd->skill_addfixcast.count++;
 		break;
 	case SP_ADD_COOL_DOWN:
 		// update
@@ -2539,9 +2585,15 @@ int bonus_randopt(struct map_session_data *sd,int id,int val)
 	case RACE_WEAPON_TOLERACE_HUMAN:
 	case RACE_WEAPON_TOLERACE_ANGEL:
 	case RACE_WEAPON_TOLERACE_DRAGON:
+		break;							//‚ê‚à‚ñ’Ç‰Á‚±‚±‚Ü‚Å
 	case RANGE_WEAPON_ATTACK_DAMAGE_TARGET:
+		if (sd->state.lr_flag != 2)
+			sd->short_weapon_damege_rate += val;
+		break;
 	case RANGE_WEAPON_ATTACK_DAMAGE_USER:
-		break;	// –¢ŽÀ‘•194-205
+		if (sd->state.lr_flag != 2)
+			sd->near_attack_def_rate += val;
+		break;
 	case RACE_TOLERACE_PLAYER_HUMAN:
 	case RACE_TOLERACE_PLAYER_DORAM:
 	case RACE_DAMAGE_PLAYER_HUMAN:
@@ -2595,6 +2647,10 @@ int bonus_randopt(struct map_session_data *sd,int id,int val)
 		if (sd->state.lr_flag != 2)
 			sd->parame[6] += val;
 		break;
+	case OPT_SPLAMOUNT:
+		if (sd->state.lr_flag != 2)
+			sd->parame[9] += val;
+		break;
 	case OPT_STAAMOUNT:
 		if (sd->state.lr_flag != 2)
 			sd->parame[7] += val;
@@ -2602,10 +2658,6 @@ int bonus_randopt(struct map_session_data *sd,int id,int val)
 	case OPT_WISAMOUNT:
 		if (sd->state.lr_flag != 2)
 			sd->parame[8] += val;
-		break;
-	case OPT_SPLAMOUNT:
-		if (sd->state.lr_flag != 2)
-			sd->parame[9] += val;
 		break;
 	case OPT_CONAMOUNT:
 		if (sd->state.lr_flag != 2)

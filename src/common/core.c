@@ -66,8 +66,7 @@ static void pid_create(const char* file)
 	int lock;
 	size_t i;
 
-	strncpy(pid_file, file, sizeof(pid_file) - 5);
-	pid_file[sizeof(pid_file)-5] = '\0';
+	auriga_strlcpy(pid_file, file, sizeof(pid_file) - 5);
 
 	for(i = strlen(pid_file); i != 0; i--) {
 		if(pid_file[i] == '/' || pid_file[i] == '\\')
@@ -78,7 +77,7 @@ static void pid_create(const char* file)
 		}
 	}
 
-	strcat(pid_file, ".pid");
+	auriga_strlcat(pid_file, ".pid", sizeof(pid_file));
 	fp = lock_fopen(pid_file, &lock);
 	if(fp) {
 #ifdef WINDOWS
@@ -274,11 +273,7 @@ static LONG WINAPI core_ExceptionRoutine(struct _EXCEPTION_POINTERS *e)
 		e->ContextRecord, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL)
 #endif
 	) {
-#ifdef __BORLANDC__
-		// BCC の場合はシンボル名が分からないのでアドレスは引かない。
-		// シンボル名の出力はcrashdump.plで行う。
-		len = wsprintf(buf, "\t0x%08x : unknown\r\n", stack.AddrPC.Offset);
-#elif defined(_WIN64)
+#ifdef _WIN64
 		// SymGetSymFromAddr64 は使用するべきじゃないらしい…。
 		if(SymGetSymFromAddr(hProcess, stack.AddrPC.Offset, &offset, symbol)) {
 			len = wsprintf(

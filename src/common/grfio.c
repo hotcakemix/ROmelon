@@ -101,6 +101,7 @@
 #if defined(WINDOWS) && defined(__64BIT__)
 	#define fseek _fseeki64
 	#define stat  _stat64
+	#define ftell _ftelli64
 #endif
 
 static int initialized = 0;
@@ -194,6 +195,21 @@ static unsigned char NibbleData[4][64]={
 static unsigned int getlong(unsigned char *p)
 {
 	return p[0] + (p[1] << 8) + (p[2] << 16) + (p[3] << 24);
+}
+
+/*-----------------
+ *    long data get
+ */
+static unsigned long long getlong64(unsigned char* p)
+{
+	return (atn_bignumber)p[0]
+		+ ((atn_bignumber)p[1] << 8)
+		+ ((atn_bignumber)p[2] << 16)
+		+ ((atn_bignumber)p[3] << 24)
+		+ ((atn_bignumber)p[4] << 32)
+		+ ((atn_bignumber)p[5] << 40)
+		+ ((atn_bignumber)p[6] << 48)
+		+ ((atn_bignumber)p[7] << 56);
 }
 
 /*==========================================
@@ -505,7 +521,7 @@ int grfio_size(const char *fname)
 		FILELIST lentry;
 		struct stat st;
 
-		strncpy(lfname,fname,255);
+		auriga_strlcpy(lfname, fname, sizeof(lfname));
 		lfname[sizeof(lfname)-1] = '\0';
 		for(p = lfname; *p; p++) {	// ※Unix時のみ
 			if (*p == '\\')
@@ -513,7 +529,7 @@ int grfio_size(const char *fname)
 		}
 
 		if (stat(lfname,&st)==0) {
-			strncpy(lentry.fn, fname, sizeof(lentry.fn)-1 );
+			auriga_strlcpy(lentry.fn, fname, sizeof(lentry.fn));
 			lentry.declen = (int)st.st_size;
 			lentry.gentry = 0;	// 0:LocalFile
 			entry = filelist_modify(&lentry);
@@ -545,7 +561,7 @@ void* grfio_reads(const char *fname, int *size)
 		FILELIST lentry;
 		struct stat st;
 
-		strncpy(lfname,fname,255);
+		auriga_strlcpy(lfname, fname, sizeof(lfname));
 		lfname[sizeof(lfname)-1]= '\0';
 		for(p = lfname; *p; p++) {	// ※Unix時のみ
 			if (*p == '\\')
@@ -566,7 +582,7 @@ void* grfio_reads(const char *fname, int *size)
 			fread(buf2,1,lentry.declen,in);
 			fclose(in);
 			in = NULL;
-			strncpy( lentry.fn, fname, sizeof(lentry.fn)-1 );
+			auriga_strlcpy(lentry.fn, fname, sizeof(lentry.fn));
 			lentry.gentry = 0;	// 0:LocalFile
 			entry = filelist_modify(&lentry);
 		} else {
@@ -685,7 +701,7 @@ static int grfio_entryread(const char *gfname,int gentry)
 	}
 
 	fread(grf_header, 1, sizeof(grf_header), fp);
-	if((strcmp((char*)grf_header, GRF_HEADER) && strcmp((char*)grf_header, GRF_HEADER2)) || fseek(fp, getlong(grf_header + 0x1e), 1)) {	// SEEK_CUR
+	if ((strcmp((char*)grf_header, GRF_HEADER) && strcmp((char*)grf_header, GRF_HEADER2)) || fseek(fp, getlong64(grf_header + 0x1e), 1)) {    // SEEK_CUR
 		fclose(fp);
 		printf("GRF Data File read error.\n");
 		return 4;	// 4:file format error
@@ -694,8 +710,10 @@ static int grfio_entryread(const char *gfname,int gentry)
 	/* Read the version */
 	grf_version = getlong(grf_header + 0x2a);
 	/* Read the number of files */
-	entrys = getlong(grf_header + 0x26) - getlong(grf_header + 0x22) - 7;
-
+	if ((grf_version & 0xFF00) != 0x300)
+		entrys = getlong(grf_header + 0x26) - getlong(grf_header + 0x22) - 7;
+	else
+		entrys = getlong(grf_header + 0x26);
 	printf("GRF version: 0x%04X. Number of files: %d.", grf_version, entrys);
 
 	switch (grf_version & 0xFF00) {
@@ -747,7 +765,7 @@ static int grfio_entryread(const char *gfname,int gentry)
 				aentry.srcpos         = getlong(grf_filelist+ofs2+13)+0x2e;
 				aentry.cycle          = srccount;
 				aentry.type           = type;
-				strncpy(aentry.fn,fname,sizeof(aentry.fn)-1);
+				auriga_strlcpy(aentry.fn, fname, sizeof(aentry.fn));
 				aentry.fn[sizeof(aentry.fn)-1] = '\0';
 #ifdef GRFIO_LOCAL
 				aentry.gentry         = -(gentry+1);	// 負数にするのは初回LocalFileCheckをさせるためのFlagとして
@@ -857,10 +875,10 @@ static int grfio_entryread(const char *gfname,int gentry)
 				aentry.srclen         = srclen;
 				aentry.srclen_aligned = getlong(grf_filelist+ofs2+4);
 				aentry.declen         = getlong(grf_filelist+ofs2+8);
-				aentry.srcpos         = getlong(grf_filelist+ofs2+13)+0x2e;
+				aentry.srcpos		  = getlong64(grf_filelist + ofs2 + 13) + 0x2e;
 				aentry.cycle          = srccount;
 				aentry.type           = type;
-				strncpy(aentry.fn,fname,sizeof(aentry.fn)-1);
+				auriga_strlcpy(aentry.fn, fname, sizeof(aentry.fn));
 				aentry.fn[sizeof(aentry.fn)-1] = '\0';
 #ifdef GRFIO_LOCAL
 				aentry.gentry         = -(gentry+1);	// 負数にするのは初回LocalFileCheckをさせるためのFlagとして
@@ -915,14 +933,14 @@ static void grfio_resourcecheck(const char *data_dir)
 
 			// gat,txt,rswのみチェック
 			if(strcasecmp(ext_ptr,".gat") == 0 || strcasecmp(ext_ptr,".txt") == 0 || strcasecmp(ext_ptr,".rsw") == 0) {
-				sprintf(dst,"data\\%s",w2);
+				snprintf(dst, sizeof(dst), "data\\%s", w2);
 
 				entry = filelist_find(dst);
 				if(entry) {
 					FILELIST fentry;
 					memcpy( &fentry, entry, sizeof(FILELIST) );
-					sprintf(src,"data\\%s",w1);
-					strncpy( fentry.fn ,src, sizeof(fentry.fn)-1 );
+					snprintf(src, sizeof(src), "data\\%s", w1);
+					auriga_strlcpy(fentry.fn, src, sizeof(fentry.fn));
 					filelist_modify(&fentry);
 					count++;
 				} else {

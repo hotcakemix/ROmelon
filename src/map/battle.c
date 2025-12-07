@@ -1556,18 +1556,6 @@ static atn_bignumber battle_addmastery(struct map_session_data *sd,struct block_
 				damage += (skill * 3);
 			}
 			break;
-		case WT_MUSICAL:
-			// 楽器の練習(+3 ～ +30) 楽器
-			if((skill = pc_checkskill(sd,BA_MUSICALLESSON)) > 0) {
-				damage += (skill * 3);
-			}
-			break;
-		case WT_WHIP:
-			// ダンスの練習(+3 ～ +30) 鞭
-			if((skill = pc_checkskill(sd,DC_DANCINGLESSON)) > 0) {
-				damage += (skill * 3);
-			}
-			break;
 		case WT_BOOK:
 			// アドバンスドブック(+3 ～ +30) {
 			if((skill = pc_checkskill(sd,SA_ADVANCEDBOOK)) > 0) {
@@ -2103,6 +2091,8 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 	case DK_HACKANDSLASHER:		// ハックアンドスラッシャー
 	case DK_HACKANDSLASHER_ATK:	// ハックアンドスラッシャー(攻撃)
 	case DK_STORMSLASH:			// ストームスラッシュ
+	case DK_DRAGONIC_PIERCE:	// ドラゴニックピアース	れもん追加
+	case IG_RADIANT_SPEAR:		// レイディアントスピア れもん追加
 	case IQ_MASSIVE_F_BLASTER:	// 炎火滅魔神弾
 	case IQ_EXPOSION_BLASTER:	// 爆火神弾
 	case IQ_THIRD_PUNISH:		// 第三撃：断罪
@@ -2122,6 +2112,8 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 	case MT_TRIPLE_LASER:		// トリプルレーザー
 	case BO_MAYHEMIC_THORNS:	// メイヘミックソーンズ
 	case MA_SHARPSHOOTING:		// シャープシューティング（傭兵）
+	case WH_CRESCIVE_BOLT:		// クレッシブボルト
+	case WH_WILD_WALK:			// ワイルドウォーク
 		calc_flag.critical = 1;		// クリティカル判定を判定中に
 		break;
 	case WH_GALESTORM:			// ゲイルストーム
@@ -3798,7 +3790,8 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			break;
 		case BA_MUSICALSTRIKE:	// ミュージカルストライク
 		case DC_THROWARROW:	// 矢撃ち
-			DMG_FIX( 60+40*skill_lv, 100 );
+			DMG_FIX( 110+40*skill_lv, 100 );
+			wd.div_ = 2;
 			break;
 		case CH_TIGERFIST:	// 伏虎拳
 			DMG_FIX( 40+100*skill_lv, 100 );
@@ -3836,7 +3829,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( 200+50*skill_lv, 100 );
 			break;
 		case CG_ARROWVULCAN:	// アローバルカン
-			DMG_FIX( 200+100*skill_lv, 100 );
+			DMG_FIX( (600 + 100 * skill_lv) * status_get_lv(src) / 100, 100 );
 			break;
 		case AS_SPLASHER:	// ベナムスプラッシャー
 			if(src_sd) {
@@ -4207,19 +4200,21 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			}
 			break;
 		case MH_NEEDLE_OF_PARALYZE:	// ニードルオブパラライズ
-			DMG_FIX( 700+100*skill_lv, 100 );
+			DMG_FIX( (450 * skill_lv + status_get_dex(src))* status_get_lv(src) / 100, 100 );
+			calc_flag.idef = calc_flag.idef = 1; // 防御無視
 			break;
 		case MH_SONIC_CRAW:	// ソニッククロー
-			DMG_FIX( 40*skill_lv * status_get_lv(src) / 150, 100 );
+			DMG_FIX( 60*skill_lv * status_get_lv(src) / 150, 100 );
 			break;
 		case MH_SILVERVEIN_RUSH:	// シルバーベインラッシュ
-			DMG_FIX( 150 * skill_lv * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (250 * skill_lv + status_get_str(src) ) * status_get_lv(src) / 100, 100 );
 			break;
 		case MH_MIDNIGHT_FRENZY:	// ミッドナイトフレンジ
-			DMG_FIX( 300 * skill_lv * status_get_lv(src) / 150, 100 );
+			DMG_FIX((450 * skill_lv + status_get_str(src)) * status_get_lv(src) / 100, 100);
+			calc_flag.idef = calc_flag.idef = 1; // 防御無視
 			break;
 		case MH_STAHL_HORN:	// シュタールホーン
-			DMG_FIX( 500 + 100 * skill_lv * status_get_lv(src) / 150, 100 );
+			DMG_FIX( ( 1500 + 300 * skill_lv + status_get_vit(src) ) * status_get_lv(src) / 150, 100 );
 			break;
 		case MH_TINDER_BREAKER:	// ティンダーブレイカー
 			DMG_FIX( 100 * skill_lv * status_get_lv(src) / 100, 100 );
@@ -4236,10 +4231,15 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			}
 			break;
 		case MH_LAVA_SLIDE:	// ラーヴァスライド
-			DMG_FIX( (20 * skill_lv + 3 * status_get_lv(src)) * status_get_lv(src) / 120, 100 );
+			DMG_FIX( (50 * skill_lv + 3 * status_get_lv(src)) * status_get_lv(src) / 120, 100 );
+			wd.div_ = 2;
 			break;
 		case MH_MAGMA_FLOW:	// マグマフロー
 			DMG_FIX( (100 * skill_lv + 3 * status_get_lv(src)) * status_get_lv(src) / 120, 100 );
+			break;
+		case MH_NEEDLE_STINGER:	// ニードルスティンガー
+			DMG_FIX((10000 + skill_lv * 500 + status_get_dex(src)) * status_get_lv(src) / 120, 100);
+			calc_flag.idef = calc_flag.idef = 1; // 防御無視
 			break;
 		case MER_CRASH:		// クラッシュ
 			DMG_FIX( 100+10*skill_lv, 100 );
@@ -4653,9 +4653,9 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 		case WM_SEVERE_RAINSTORM:		// シビアレインストーム
 		case WM_SEVERE_RAINSTORM_MELEE:	// シビアレインストーム(攻撃)
 			if(src_sd && (src_sd->status.weapon == WT_MUSICAL || src_sd->status.weapon == WT_WHIP)) {
-				DMG_FIX( (status_get_agi(src) + status_get_dex(src)) * skill_lv / 5 * status_get_lv(src) / 60, 100 );
+				DMG_FIX( (skill_lv * 200 + status_get_agi(src) + status_get_dex(src) ) * status_get_lv(src) / 100, 100 );
 			} else {
-				DMG_FIX( (status_get_agi(src) + status_get_dex(src)) * skill_lv / 5 * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (skill_lv * 100 + status_get_agi(src) + status_get_dex(src) ) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case WM_GREAT_ECHO:		// グレートエコー
@@ -5011,10 +5011,14 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			break;
 		case DK_HACKANDSLASHER:		// ハックアンドスラッシャー
 		case DK_HACKANDSLASHER_ATK:	// ハックアンドスラッシャー(攻撃)
-			DMG_FIX( (1400 + skill_lv*100 + status_get_pow(src)*8) * status_get_lv(src) / 100, 100 );
+			if (src_sd && src_sd->status.weapon == WT_2HSWORD) {
+				DMG_FIX( (2500 + skill_lv * 200 + status_get_pow(src) * 11) * status_get_lv(src) / 100, 100 );
+			} else {
+				DMG_FIX( (1800 + skill_lv * 150 + status_get_pow(src) * 15) * status_get_lv(src) / 100, 100 );
+			}
 			break;
 		case DK_DRAGONIC_AURA:	// ドラゴニックオーラ
-			DMG_FIX( (7000 + skill_lv*2000 + status_get_pow(src)*90) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (7500 + skill_lv * 2250 + status_get_pow(src) * 100) * status_get_lv(src) / 100, 100 );
 			break;
 		case DK_MADNESS_CRUSHER:	// マッドネスクラッシャー
 			{
@@ -5026,13 +5030,21 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 						wlv = src_sd->inventory_data[idx]->wlv;
 					}
 				}
-				DMG_FIX( (3000 + skill_lv*900 + status_get_pow(src)*(10+skill_lv*3) + weight * wlv) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (5700 + skill_lv * 1200 + status_get_pow(src) * (19 + skill_lv * 4) + weight * wlv) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case DK_STORMSLASH:		//ストームスラッシュ
-			DMG_FIX( (1250 + skill_lv*50 + status_get_pow(src)*5) * status_get_lv(src) / 100, 100 );
-			if(sc && sc->data[SC_GIANTGROWTH].timer != -1 && atn_rand() % 100 < 15) {		// ジャイアントグロース状態
+			DMG_FIX( (1550 + skill_lv * 50 + status_get_pow(src) * 6) * status_get_lv(src) / 100, 100 );
+			if(sc && sc->data[SC_GIANTGROWTH].timer != -1 ) {		// ジャイアントグロース状態
 				DMG_FIX( 200, 100 );
+			}
+			break;
+		case DK_DRAGONIC_PIERCE:	// ドラゴニックピアース		れもん追加
+			if (sc && sc->data[SC_DRAGONIC_AURA].timer != -1) {
+				DMG_FIX((4600 + skill_lv * 1000 + status_get_pow(src) * 32)* status_get_lv(src) / 100, 100);
+			}
+			else {
+				DMG_FIX((3550 + skill_lv * 850 + status_get_pow(src) * 26) * status_get_lv(src) / 100, 100);
 			}
 			break;
 		case IQ_OLEUM_SANCTUM:		/* 聖油洗礼 */
@@ -5045,16 +5057,16 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( (2000 + skill_lv*500 + status_get_pow(src)*15) * status_get_lv(src) / 100, 100 );
 			break;
 		case IQ_FIRST_BRAND:		/* 第一撃：烙印 */
-			DMG_FIX( (2000 + skill_lv*500 + status_get_pow(src)*15) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (2900 + skill_lv*500 + status_get_pow(src)*20) * status_get_lv(src) / 100, 100 );
 			break;
 		case IQ_SECOND_FLAME:		/* 第二撃：滅魔の火 */
-			DMG_FIX( (3600 + skill_lv*900 + status_get_pow(src)*27) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (5750 + skill_lv * 1250 + status_get_pow(src) * 35) * status_get_lv(src) / 100, 100 );
 			break;
 		case IQ_SECOND_FAITH:		/* 第二撃：信念 */
-			DMG_FIX( (3150 + skill_lv*750 + status_get_pow(src)*23) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (3950 + skill_lv * 1250 + status_get_pow(src) * 30) * status_get_lv(src) / 100, 100 );
 			break;
 		case IQ_SECOND_JUDGEMENT:	/* 第二撃：審判 */
-			DMG_FIX( (3375 + skill_lv*825 + status_get_pow(src)*25) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (4850 + skill_lv * 1250 + status_get_pow(src) * 30) * status_get_lv(src) / 100, 100 );
 			break;
 		case IQ_THIRD_PUNISH:		/* 第三撃：断罪 */
 			DMG_FIX( (7000 + skill_lv*1000 + status_get_pow(src)*40) * status_get_lv(src) / 100, 100 );
@@ -5073,20 +5085,20 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( (7000 + skill_lv*1000 + status_get_pow(src)*40) * status_get_lv(src) / 100, 100 );
 			break;
 		case IG_GRAND_JUDGEMENT:	/* グランドジャッジメント */
-			DMG_FIX( (7000 + skill_lv*2000 + status_get_pow(src)*35) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (7500 + skill_lv*2250 + status_get_pow(src) * 100) * status_get_lv(src) / 100, 100 );
 			break;
 		case IG_SHIELD_SHOOTING:	/* シールドシューティング */
 			if(src_sd) {
 				int idx = src_sd->equip_index[EQUIP_INDEX_LARM];
 				if(idx >= 0 && src_sd->inventory_data[idx] && itemdb_isarmor(src_sd->inventory_data[idx]->nameid)) {
-					DMG_FIX( (600 + (800 + pc_checkskill(src_sd,IG_SHIELD_MASTERY)*40) * skill_lv + src_sd->status.inventory[idx].refine*200 + src_sd->inventory_data[idx]->weight/10 + status_get_pow(src)*30) * status_get_lv(src) / 100, 100);
+					DMG_FIX( (1200 + (800 + pc_checkskill(src_sd,IG_SHIELD_MASTERY) * 45) * skill_lv + src_sd->status.inventory[idx].refine * 200 + src_sd->inventory_data[idx]->weight/10 + status_get_pow(src) * 45) * status_get_lv(src) / 100, 100);
 				}
 			} else {
-				DMG_FIX( (600 + 800 * skill_lv + status_get_pow(src)*30) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (1200 + 800 * skill_lv + status_get_pow(src)*40) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case IG_OVERSLASH:	/* オーバースラッシュ */
-			DMG_FIX( (skill_lv*70 + ((src_sd)? pc_checkskill(src_sd,IG_SPEAR_SWORD_M): 0) * (skill_lv * 5) + status_get_pow(src)*3) * status_get_lv(src) / 100, 100);
+			DMG_FIX( (skill_lv * 130 + ((src_sd)? pc_checkskill(src_sd,IG_SPEAR_SWORD_M): 0) * (skill_lv * 12) + status_get_pow(src) * 7) * status_get_lv(src) / 100, 100);
 			if(wflag < 2) {
 				wd.div_ = skill_get_num(skill_num,1);
 			} else if(wflag < 4) {
@@ -5095,15 +5107,26 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 				wd.div_ = skill_get_num(skill_num,3);
 			}
 			break;
-		case CD_EFFLIGO:	/* エフィリゴ */
-			if(t_race == RCT_UNDEAD || t_race == RCT_DEMON) {
-				DMG_FIX( (4000 + 500 * skill_lv + ((src_sd)? pc_checkskill(src_sd,CD_MACE_BOOK_M): 0) * (400 + skill_lv * 50) + status_get_pow(src)*60) * status_get_lv(src) / 100, 100 );
-			} else {
-				DMG_FIX( (3000 + 375 * skill_lv + ((src_sd)? pc_checkskill(src_sd,CD_MACE_BOOK_M): 0) * (200 + skill_lv * 25) + status_get_pow(src)*30) * status_get_lv(src) / 100, 100 );
+		case IG_RADIANT_SPEAR:	/* レイディアントスピア */
+			if (sc && sc->data[SC_SPEAR_SCAR].timer != -1) {
+				DMG_FIX((1200 + 450 * skill_lv + ((src_sd) ? pc_checkskill(src_sd, IG_SPEAR_SWORD_M) : 0) * (390 * skill_lv) + status_get_pow(src) * 32) * status_get_lv(src) / 100, 100);
+			}
+			else {
+				DMG_FIX((300 + 400 * (skill_lv - 1) + ((src_sd) ? pc_checkskill(src_sd, IG_SPEAR_SWORD_M) : 0) * (390 * skill_lv) + status_get_pow(src) * 26) * status_get_lv(src) / 100, 100);
 			}
 			break;
+		case IG_IMPERIAL_CROSS:	/* インペリアルクロス */
+			if (sc && sc->data[SC_SPEAR_SCAR].timer != -1) {
+				DMG_FIX((1500 + 2700 * skill_lv + ((src_sd) ? pc_checkskill(src_sd, IG_SPEAR_SWORD_M) : 0) * (960 * skill_lv) + status_get_pow(src) * 82) * status_get_lv(src) / 100, 100);
+			} else {
+				DMG_FIX((1400 + 2200 * (skill_lv - 1) + ((src_sd) ? pc_checkskill(src_sd, IG_SPEAR_SWORD_M) : 0) * (960 * skill_lv) + status_get_pow(src) * 66) * status_get_lv(src) / 100, 100);
+			}
+			break;
+		case CD_EFFLIGO:	/* エフィリゴ */
+			DMG_FIX( (4000 + 500 * skill_lv + ((src_sd)? pc_checkskill(src_sd,CD_MACE_BOOK_M): 0) * (400 + skill_lv * 50) + status_get_pow(src)*60) * status_get_lv(src) / 100, 100 );
+			break;
 		case CD_PETITIO:	/* ペティティオ */
-			DMG_FIX( (250 * skill_lv + ((src_sd)? pc_checkskill(src_sd,CD_MACE_BOOK_M): 0) * (skill_lv * 20) + status_get_pow(src)*15) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (350 * skill_lv + ((src_sd)? pc_checkskill(src_sd,CD_MACE_BOOK_M): 0) * (skill_lv * 30) + status_get_pow(src) * 20) * status_get_lv(src) / 100, 100 );
 			break;
 		case SHC_DANCING_KNIFE:		/* ダンシングナイフ */
 			DMG_FIX( (100 + 100 * skill_lv + status_get_pow(src)*2) * status_get_lv(src) / 100, 100 );
@@ -5146,7 +5169,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( (600 + 150 * skill_lv + status_get_pow(src)*7) * status_get_lv(src) / 100, 100 );
 			break;
 		case MT_AXE_STOMP:		/* アックスストンプ */
-			DMG_FIX( (3150 + 750 * skill_lv + status_get_pow(src)*10) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (3900 * skill_lv + status_get_pow(src) * 25) * status_get_lv(src) / 100, 100 );
 			if(src_sd && src_sd->status.weapon == WT_2HAXE) {
 				wd.div_ = 2;
 			}
@@ -5158,17 +5181,17 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( (300 * skill_lv + status_get_pow(src)*5) * status_get_lv(src) / 100, 100 );
 			break;
 		case ABC_ABYSS_DAGGER:		/* アビスダガー */
-			DMG_FIX( (3150 + 750 * skill_lv + status_get_pow(src)*23) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (5700 + 1500 * skill_lv + status_get_pow(src) * 44) * status_get_lv(src) / 100, 100 );
 			break;
 		case ABC_UNLUCKY_RUSH:		/* アンラッキーラッシュ */
-			DMG_FIX( (2100 + 600 * skill_lv + status_get_pow(src)*17) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (3100 + 700 * skill_lv + status_get_pow(src) * 22) * status_get_lv(src) / 100, 100 );
 			break;
 		case ABC_CHAIN_REACTION_SHOT:		/* チェーンリアクションショット */
 		case ABC_CHAIN_REACTION_SHOT_ATK:	/* チェーンリアクションショット(攻撃) */
 			DMG_FIX( (2350 + 550 * skill_lv + status_get_con(src)*17) * status_get_lv(src) / 100, 100 );
 			break;
 		case ABC_DEFT_STAB:		/* デフトスタブ */
-			DMG_FIX( (3400 + 350 * skill_lv + status_get_pow(src)*23) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (5700 + 750 * skill_lv + status_get_pow(src) * 44) * status_get_lv(src) / 100, 100 );
 			break;
 		case ABC_FRENZY_SHOT:	/* フレンジショット */
 			DMG_FIX( (1100 + 100 * skill_lv + status_get_con(src)*7) * status_get_lv(src) / 100, 100 );
@@ -5211,7 +5234,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 		case WH_SOLIDTRAP:		/* ソリッドトラップ */
 		case WH_SWIFTTRAP:		/* スイフトトラップ */
 		case WH_FLAMETRAP:		/* フレイムトラップ */
-			DMG_FIX( (1500 + 300 * skill_lv + status_get_con(src)*10) * ((src_sd)? 100+pc_checkskill(src_sd,WH_ADVANCED_TRAP)*20: 100) / 100 * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (3600 + 600 * skill_lv + status_get_con(src) * 20) * ((src_sd)? 100+pc_checkskill(src_sd,WH_ADVANCED_TRAP)*20: 100) / 100 * status_get_lv(src) / 100, 100 );
 			break;
 		case BO_ACIDIFIED_ZONE_WATER:		/* アシディファイドゾーン(水) */
 		case BO_ACIDIFIED_ZONE_GROUND:		/* アシディファイドゾーン(地) */
@@ -5344,7 +5367,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			break;
 		case SH_CHUL_HO_SONIC_CLAW:	/* タイガースラッシュ */
 			if((src_sd && pc_checkskill(src_sd,SH_COMMUNE_WITH_CHUL_HO)) || (sc && sc->data[SC_TEMPORARY_COMMUNION].timer != -1)) {
-				DMG_FIX( (3000 + skill_lv * 500 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SH_MYSTICAL_CREATURE_MASTERY) * 150: 0)) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (3500 + skill_lv * 500 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SH_MYSTICAL_CREATURE_MASTERY) * 150: 0)) * status_get_lv(src) / 100, 100 );
 			} else {
 				DMG_FIX( (2050 + skill_lv * 350 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SH_MYSTICAL_CREATURE_MASTERY) * 100: 0)) * status_get_lv(src) / 100, 100 );
 			}
@@ -5367,7 +5390,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			{
 				static const int ss_rate[11] = { 100, 101, 103, 105, 107, 109, 111, 113, 115, 120, 125 };
 				int ss_lv = (src_sd)? pc_checkskill(src_sd,HN_SELFSTUDY_TATICS): 0;
-				int rate = (850 + ss_lv * 3 * skill_lv + status_get_pow(src) * 2) * status_get_lv(src) / 100;
+				int rate = (1350 + skill_lv * 50 + ss_lv * 3 * skill_lv + status_get_pow(src) * 2) * status_get_lv(src) / 100;
 
 				// 独学のダメージ倍増計算
 				if(ss_lv > 10) ss_lv = 10;
@@ -5389,7 +5412,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			{
 				static const int ss_rate[11] = { 100, 101, 103, 105, 107, 109, 111, 113, 115, 120, 125 };
 				int ss_lv = (src_sd)? pc_checkskill(src_sd,HN_SELFSTUDY_TATICS): 0;
-				int rate = (1650 + skill_lv * 50 + ss_lv * 5 * skill_lv + status_get_pow(src) * 4) * status_get_lv(src) / 100;
+				int rate = (4500 + skill_lv * 100 + ss_lv * 5 * skill_lv + status_get_pow(src) * 4) * status_get_lv(src) / 100;
 
 				// 独学のダメージ倍増計算
 				if(ss_lv > 10) ss_lv = 10;
@@ -5411,7 +5434,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			{
 				static const int ss_rate[11] = { 100, 101, 103, 105, 107, 109, 111, 113, 115, 120, 125 };
 				int ss_lv = (src_sd)? pc_checkskill(src_sd,HN_SELFSTUDY_TATICS): 0;
-				int rate = (3050 + skill_lv * 175 + ss_lv * 3 * skill_lv + status_get_pow(src) * 3) * status_get_lv(src) / 100;
+				int rate = (4300 + skill_lv * 200 + ss_lv * 3 * skill_lv + status_get_pow(src) * 3) * status_get_lv(src) / 100;
 
 				// 独学のダメージ倍増計算
 				if(ss_lv > 10) ss_lv = 10;
@@ -5428,7 +5451,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			{
 				static const int ss_rate[11] = { 100, 101, 103, 105, 107, 109, 111, 113, 115, 120, 125 };
 				int ss_lv = (src_sd)? pc_checkskill(src_sd,HN_SELFSTUDY_TATICS): 0;
-				int rate = 4475 + skill_lv * 125 + ss_lv * 3 * skill_lv;
+				int rate = 4500 + skill_lv * 250 + ss_lv * 3 * skill_lv;
 				switch(t_size) {
 					case 0: rate = rate * 150 / 100; break;		// 小型
 					case 1: rate = rate * 130 / 100; break;		// 中型
@@ -5448,7 +5471,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			}
 			break;
 		case SKE_RISING_SUN:		/* 天地一陽 */
-			DMG_FIX( (250 + skill_lv * 50 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (800 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SKE_NOON_BLAST:		/* 太天一陽 */
 			DMG_FIX( (1125 + skill_lv * 175 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
@@ -5457,53 +5480,53 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( (1575 + skill_lv * 225 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SKE_RISING_MOON:		/* 天地一月 */
-			DMG_FIX( (175 + skill_lv * 25 + status_get_pow(src) * 3 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (1000 + skill_lv * 100 + status_get_pow(src) * 3 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SKE_MIDNIGHT_KICK:		/* 太天一月 */
 			if(sc && (sc->data[SC_MIDNIGHT_MOON].timer != -1 || sc->data[SC_SKY_ENCHANT].timer != -1)) {
-				DMG_FIX( (1500 + skill_lv * 200 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (2950 + skill_lv * 450 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			} else {
-				DMG_FIX( (750 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (1475 + skill_lv * 225 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case SKE_DAWN_BREAK:		/* 天月 */
 			if(sc && (sc->data[SC_DAWN_MOON].timer != -1 || sc->data[SC_SKY_ENCHANT].timer != -1)) {
-				DMG_FIX( (1750 + skill_lv * 300 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (4000 + skill_lv * 550 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			} else {
-				DMG_FIX( (875 + skill_lv * 150 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (2000 + skill_lv * 275 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case SKE_TWINKLING_GALAXY:	/* 天地万星 */
 			DMG_FIX( (250 + skill_lv * 100 + status_get_pow(src) * 3 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 3 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SKE_STAR_BURST:		/* 天命落星 */
-			DMG_FIX( (150 + skill_lv * 100 + status_get_pow(src) * 3 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (675 + skill_lv * 75 + status_get_pow(src) * 3 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SKE_STAR_CANNON:		/* 天星 */
-			DMG_FIX( (750 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (1050 + skill_lv * 150 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SKE_SKY_MASTERY) * 5 * skill_lv: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SKE_ALL_IN_THE_SKY:	/* 天羅万象 */
 			DMG_FIX( (skill_lv * 300 + status_get_pow(src) * 10) * status_get_lv(src) / 100, 100 );
 			if(t_race == RCT_DEMON || t_race == RCT_DEMIHUMAN) {
-				wd.div_ += 2;
 			}
 			break;
 		case SS_SHIMIRU:			/* 影潜り */
 			DMG_FIX( (2500 + skill_lv * 500 + status_get_con(src) * 5) * status_get_lv(src) / 100, 100 );
 			break;
 		case SS_KAGEGARI:			/* 影狩り */
-			DMG_FIX( (3500 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KAGEGISSEN) * 50: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (7700 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KAGEGISSEN) * 70: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SS_KAGENOMAI:			/* 影の舞 */
-			DMG_FIX( (3500 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KAGEGARI) * 50: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (4600 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KAGEGARI) * 70: 0)) * status_get_lv(src) / 100, 100 );
 			if(wflag&2) {	// 分身攻撃
 				wd.damage = wd.damage * 30 / 100;
 				if(calc_flag.lh)
 					wd.damage2 = wd.damage2 * 30 / 100;
+				wd.div_ += 3;
 			}
 			break;
 		case SS_KAGEGISSEN:			/* 影一閃 */
-			DMG_FIX( (2000 + skill_lv * 100 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KAGENOMAI) * 50: 0)) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (500 + skill_lv * 50 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KAGENOMAI) * 40: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SS_FUUMASHOUAKU:		/* 風魔手裏剣 -掌握- */
 			DMG_FIX( (skill_lv * 50 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_FUUMAKOUCHIKU) * 50: 0)) * status_get_lv(src) / 100, 100 );
@@ -5530,7 +5553,7 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			DMG_FIX( (500 + skill_lv * 50 + status_get_pow(src) * 5 + ((src_sd)? pc_checkskill(src_sd,SS_KUNAIKAITEN) * 50: 0)) * status_get_lv(src) / 100, 100 );
 			break;
 		case SS_KAGEAKUMU:			/* 幻術 -影縫い- */
-			DMG_FIX( (23000 + status_get_pow(src) * 10) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (52000 + status_get_pow(src) * 10) * status_get_lv(src) / 100, 100 );
 			if(t_sc && t_sc->data[SC_NIGHTMARE].timer != -1) {
 				wd.damage = wd.damage * 150 / 100;
 				if(calc_flag.lh)
@@ -5547,31 +5570,31 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			break;
 		case DK_DRAGONIC_BREATH:	/* ドラゴニックブレス */
 			if(sc && sc->data[SC_DRAGONIC_AURA].timer != -1) {
-				DMG_FIX( (3500 + skill_lv*400 + status_get_pow(src)*20 + status_get_max_hp(src)/500 + status_get_max_sp(src)/20) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (3500 + skill_lv*400 + status_get_pow(src)*20 + status_get_max_hp(src)/250 + status_get_max_sp(src)/10) * status_get_lv(src) / 100, 100 );
 			} else {
-				DMG_FIX( (2750 + skill_lv*325 + status_get_pow(src)*10 + status_get_max_hp(src)/500 + status_get_max_sp(src)/20) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (2750 + skill_lv*325 + status_get_pow(src)*10 + status_get_max_hp(src)/310 + status_get_max_sp(src)/12) * status_get_lv(src) / 100, 100 );
 			}
 			calc_flag.idef = calc_flag.idef_ = 1;
 			break;
 		case MT_SPARK_BLASTER:		/* スパークブラスター */
-			DMG_FIX( (3750 + skill_lv*375 + status_get_pow(src)*20) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (4600 + skill_lv * 500 + status_get_pow(src) * 25) * status_get_lv(src) / 100, 100 );
 			calc_flag.idef = calc_flag.idef_ = 1;
 			break;
 		case MT_TRIPLE_LASER:		/* トリプルレーザー */
-			DMG_FIX( (1100 + skill_lv*200 + status_get_pow(src)*7) * status_get_lv(src) / 100, 100 );
+			DMG_FIX( (1200 + skill_lv * 200 + status_get_pow(src) * 7) * status_get_lv(src) / 100, 100 );
 			break;
 		case MT_MIGHTY_SMASH:		/* マイティスマッシュ */
 			if(sc && sc->data[SC_AXE_STOMP].timer != -1) {
-				DMG_FIX( (4700 + skill_lv*400 + status_get_pow(src)*20) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (9000 + skill_lv * 750 + status_get_pow(src) * 25) * status_get_lv(src) / 100, 100 );
 			} else {
-				DMG_FIX( (3400 + skill_lv*350 + status_get_pow(src)*10) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (6700 + skill_lv * 650 + status_get_pow(src) * 20) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case BO_EXPLOSIVE_POWDER:	/* エクスプロッシブパウダー */
 			if(sc && sc->data[SC_RESEARCHREPORT].timer != -1) {
-				DMG_FIX( (3700 + skill_lv*1000 + status_get_pow(src)*29) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (7750 + skill_lv*1750 + status_get_pow(src)*40) * status_get_lv(src) / 100, 100 );
 			} else {
-				DMG_FIX( (3150 + skill_lv*750 + status_get_pow(src)*23) * status_get_lv(src) / 100, 100 );
+				DMG_FIX( (5700 + skill_lv * 1500 + status_get_pow(src)*35) * status_get_lv(src) / 100, 100 );
 			}
 			break;
 		case BO_MAYHEMIC_THORNS:	/* メイヘミックソーンズ */
@@ -5580,6 +5603,10 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 			} else {
 				DMG_FIX( (2000 + skill_lv*100 + status_get_pow(src)*10) * status_get_lv(src) / 100, 100 );
 			}
+			break;
+		case WH_WILD_WALK:			/* ワイルドウォーク */
+			DMG_FIX((500 + 1000 * (skill_lv - 1) + status_get_con(src) * 5) * (((src_sd) ? 50 + pc_checkskill(src_sd, WH_NATUREFRIENDLY) * 20 : 50) + 
+				 ((src_sd) ? 50 + pc_checkskill(src_sd, HT_STEELCROW) * 5 : 50)) / 100 * status_get_lv(src) / 100, 100);
 			break;
 		case EL_CIRCLE_OF_FIRE:	// サークルオブファイア
 			DMG_FIX( 300, 100 );
@@ -6597,6 +6624,10 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 	case HN_DOUBLEBOWLINGBASH:	// ダブルボウリングバッシュ
  	case SKE_ALL_IN_THE_SKY:	// 天羅万象
 	case MT_TRIPLE_LASER:		// トリプルレーザー
+	case MH_LAVA_SLIDE:		// ラーヴァスライド
+	case BA_MUSICALSTRIKE:		// ミュージカルストライク
+	case DC_THROWARROW:		//矢撃ち
+	case SS_KAGEGISSEN:		// 影一閃
 		// Hit数分修練等が乗るタイプ
 		if(wd.div_ > 1)
 			wd.damage *= wd.div_;
@@ -6962,10 +6993,6 @@ static struct Damage battle_calc_weapon_attack(struct block_list *src,struct blo
 	// マグマフロー
 	if(t_sc && t_sc->data[SC_MAGMA_FLOW].timer != -1 && atn_rand()%100 < t_sc->data[SC_MAGMA_FLOW].val2 && (wd.damage > 0 || wd.damage2 > 0)) {
 		skill_castend_damage_id(target, target, MH_MAGMA_FLOW, t_sc->data[SC_MAGMA_FLOW].val1, gettick(), 0);
-	}
-	// パイロクラスティック
-	if(sc && sc->data[SC_PYROCLASTIC].timer != -1 && atn_rand()%100 < sc->data[SC_PYROCLASTIC].val3 && (wd.damage > 0 || wd.damage2 > 0)) {
-		skill_castend_pos2(src,target->x,target->y,BS_HAMMERFALL,sc->data[SC_PYROCLASTIC].val1,gettick(),0);
 	}
 
 	/* 38．物理攻撃スキルによるオートスペル発動(item_bonus) */
@@ -7709,23 +7736,18 @@ static struct Damage battle_calc_magic_attack(struct block_list *bl,struct block
 			MATK_FIX( 40 * skill_lv * status_get_lv(bl) / 100, 100 );
 			break;
 		case MH_ERASER_CUTTER:	// イレイサーカッター
-			if(skill_lv%2) {
-				ele = ELE_WIND;
-				MATK_FIX( 500 + 100 * skill_lv, 100 );
-			}
-			else
-				MATK_FIX( 800 + 100 * skill_lv, 100 );
+			MATK_FIX( (450 * skill_lv + status_get_int(bl) ) * status_get_lv(bl) / 150, 100 );
+			ele = ELE_NEUTRAL;
+			mdef1 = mdef2 = 0;	// MDEF無視
 			break;
 		case MH_XENO_SLASHER:	// ゼノスラッシャー
-			if(skill_lv%2) {
-				ele = ELE_WIND;
-				MATK_FIX( 450 + 50 * skill_lv, 100 );
-			}
-			else
-				MATK_FIX( 500 + 100 * skill_lv, 100 );
+			MATK_FIX((350 * skill_lv + status_get_int(bl)) * status_get_lv(bl) / 150, 100);
+			ele = ELE_WIND;
+			mdef1 = mdef2 = 0;	// MDEF無視
 			break;
 		case MH_HEILIGE_STANGE:	// ハイリエージュスタンジェ
-			MATK_FIX( 500 + 250 * skill_lv * status_get_lv(bl) / 150, 100 );
+			MATK_FIX( (1500 + 250 * skill_lv + status_get_vit(bl)) * status_get_lv(bl) / 150, 100 );
+			mdef1 = mdef2 = 0;	// MDEF無視
 			break;
 		case RK_ENCHANTBLADE:	// エンチャントブレイド
 			if(sc && sc->data[SC_ENCHANTBLADE].timer != -1) {
@@ -7757,10 +7779,13 @@ static struct Damage battle_calc_magic_attack(struct block_list *bl,struct block
 			normalmagic_flag = 0;
 			break;
 		case AB_JUDEX:		// ジュデックス
-			MATK_FIX( (360 + 48 * skill_lv) * status_get_lv(bl) / 100, 100 );
+			MATK_FIX( (300 + 70 * skill_lv) * status_get_lv(bl) / 100, 100 );
 			break;
 		case AB_ADORAMUS:	// アドラムス
-			MATK_FIX( (500 + 100 * skill_lv) * status_get_lv(bl) / 100, 100 );
+			MATK_FIX( (500 + 100 * skill_lv + status_get_jlv(bl) * 2) * status_get_lv(bl) / 100, 100 );
+			if (sc && sc->data[SC_ANCILLA].timer != -1) {
+				ele = ELE_NEUTRAL;
+			}
 			break;
 		case AB_RENOVATIO:	// レノヴァティオ
 			ele = ELE_HOLY;
@@ -8054,7 +8079,7 @@ static struct Damage battle_calc_magic_attack(struct block_list *bl,struct block
 			MATK_FIX( (900 + 300 * skill_lv + status_get_spl(bl) * 8) * status_get_lv(bl) / 100, 100 );
 			break;
 		case AG_ASTRAL_STRIKE:		/* アストラルストライク */
-			MATK_FIX( (1500 + 150 * skill_lv + (skill_lv > 5)? status_get_spl(bl) * 10: status_get_spl(bl) * 5) * status_get_lv(bl) / 100, 100 );
+			MATK_FIX( (200 + 100 * skill_lv + (skill_lv > 5)? status_get_spl(bl) * 10: status_get_spl(bl) * 3) * status_get_lv(bl) / 100, 100 );
 			break;
 		case AG_ASTRAL_STRIKE_ATK:	/* アストラルストライク(初撃) */
 			MATK_FIX( (7000 + 2000 * skill_lv + status_get_spl(bl) * 90) * status_get_lv(bl) / 100, 100 );
@@ -8223,7 +8248,7 @@ static struct Damage battle_calc_magic_attack(struct block_list *bl,struct block
 			MATK_FIX( 12500 * status_get_lv(bl) / 100, 100 );
 			break;
 		case SOA_TALISMAN_OF_SOUL_STEALING:		/* 霊道符 */
-			MATK_FIX( (2000 + skill_lv * 200 + status_get_spl(bl) * 3 + ((sd)? (pc_checkskill(sd,SOA_TALISMAN_MASTERY) + pc_checkskill(sd,SOA_SOUL_MASTERY)) * 7 * skill_lv: 0)) * status_get_lv(bl) / 100, 100 );
+			MATK_FIX( (5450 + skill_lv * 650 + status_get_spl(bl) * 3 + ((sd)? (pc_checkskill(sd,SOA_TALISMAN_MASTERY) + pc_checkskill(sd,SOA_SOUL_MASTERY)) * 7 * skill_lv: 0)) * status_get_lv(bl) / 100, 100 );
 			if(sc && sc->data[SC_SEVENWIND].timer != -1) {
 				ele = sc->data[SC_SEVENWIND].val3;
 			}
@@ -8498,6 +8523,21 @@ static struct Damage battle_calc_magic_attack(struct block_list *bl,struct block
 				MATK_FIX( (17000 + status_get_spl(bl) * 10) * status_get_lv(bl) / 100, 100 );
 			}
 			break;
+		case IG_IMPERIAL_PRESSURE:	/* インペリアルプレッシャー */
+			MATK_FIX((500 + 1000 * (skill_lv - 1) + ((sd) ? pc_checkskill(sd, IG_SPEAR_SWORD_M) : 0) * (450 * skill_lv) + status_get_spl(bl) * 30) * status_get_lv(bl) / 100, 100);
+			if (sc && sc->data[SC_GUARD_STANCE].timer != -1) {
+				ele = ELE_HOLY;
+			}
+			break;
+		case EM_PSYCHIC_STREAM:	/* サイキックストリーム */
+			MATK_FIX((4500 + 4500 * skill_lv + status_get_spl(bl) * 90) * status_get_lv(bl) / 100, 100);
+			break;
+		case ABC_ABYSS_FLAME:	/* アビスフレイム */
+			MATK_FIX(((600 * skill_lv + status_get_spl(bl) * 40 + ((sd) ? pc_checkskill(sd, ABC_MAGIC_SWORD_M) * 120 : 0))) * status_get_lv(bl) / 100, 100);
+			break;
+		case ABC_ABYSS_FLAME_ATK:	/* アビスフレイム(対象) */
+			MATK_FIX(((750 * skill_lv + status_get_spl(bl) * 45 + ((sd) ? pc_checkskill(sd, ABC_MAGIC_SWORD_M) * 120 : 0))) * status_get_lv(bl) / 100, 100);
+			break;
 		case EL_FIRE_MANTLE:	/* ファイアーマントル */
 			if((t_ele == ELE_FIRE || battle_check_undead(t_race,t_ele)) && target->type != BL_PC)
 				mgd.blewcount = 0;
@@ -8561,6 +8601,10 @@ static struct Damage battle_calc_magic_attack(struct block_list *bl,struct block
 				rate -= sd->ignore_mdef_race[RCT_BOSS];
 			else
 				rate -= sd->ignore_mdef_race[RCT_NONBOSS];
+		}
+		// エクスピアティオ
+		if (sc->data[SC_EXPIATIO].timer != -1) {
+			rate -= sc->data[SC_EXPIATIO].val2;
 		}
 		if(rate > 0) {
 			mdef1 = mdef1 * rate / 100;
@@ -9382,6 +9426,10 @@ int battle_weapon_attack( struct block_list *src,struct block_list *target,unsig
 			maxdamage = (atn_bignumber)status_get_max_hp(target) * status_get_lv(target) / 100;
 			rddamage = damage * t_sc->data[SC_REFLECTDAMAGE].val3 / 100;
 			rddamage = (rddamage > maxdamage) ? maxdamage: rddamage;
+			// 反射耐性、位置は仮です
+			// 攻撃者の反射耐性参照で拡散ダメージを決定する？
+			if (sd && sd->sub_return_damage && rddamage > 0)
+				rddamage = rddamage * (100 - sd->sub_return_damage) / 100;
 
 			map_foreachinarea(battle_damage_area,target->m,
 				target->x-ar,target->y-ar,target->x+ar,target->y+ar,BL_CHAR,
@@ -9406,6 +9454,9 @@ int battle_weapon_attack( struct block_list *src,struct block_list *target,unsig
 				if(rsdamage > status_get_max_hp(target))
 					rsdamage = status_get_max_hp(target);
 #endif
+				// 反射耐性
+				if (sd && sd->sub_return_damage && rsdamage > 0)
+					rsdamage = rsdamage * (100 - sd->sub_return_damage) / 100;
 			}
 			// デスバウンド反射
 			if(t_sc && t_sc->data[SC_DEATHBOUND].timer != -1 && !(status_get_mode(src)&MD_BOSS) && path_check_dir(path_calc_dir(src,target->x,target->y),status_get_dir(target)))
@@ -9438,6 +9489,9 @@ int battle_weapon_attack( struct block_list *src,struct block_list *target,unsig
 				tmpwd = battle_calc_weapon_attack(target,src,SR_CRESCENTELBOW_AUTOSPELL,lv,flag);
 				rsdamage += tmpwd.damage;
 				wd.damage = rsdamage / 10;
+				// 反射耐性
+				if (tsd && tsd->sub_return_damage && wd.damage > 0)
+					wd.damage = wd.damage * (100 - tsd->sub_return_damage) / 100;
 				skill_blown(target,src,skill_get_blewcount(SR_CRESCENTELBOW_AUTOSPELL,lv)|SAB_NODAMAGE);
 				if(unit_distance(target,src) < skill_get_blewcount(SR_CRESCENTELBOW_AUTOSPELL,lv) + dist) {
 					skill_addtimerskill(target,tick+200,src->id,0,0,SR_CRESCENTELBOW,lv,tick,(0x0f<<20)|0x0500);
@@ -9452,6 +9506,9 @@ int battle_weapon_attack( struct block_list *src,struct block_list *target,unsig
 				ridamage += damage * tsd->long_weapon_damage_return / 100;
 			}
 		}
+		// アイテム効果に対する反射耐性
+		if (sd && sd->sub_return_damage && ridamage > 0)
+			ridamage = ridamage * (100 - sd->sub_return_damage) / 100;
 		if(rsdamage > 0)
 			clif_damage(src,src,tick,wd.amotion,wd.dmotion,rsdamage,1,4,0,0);
 		if(ridamage > 0)
@@ -10254,6 +10311,11 @@ int battle_skill_attack(int attack_type,struct block_list* src,struct block_list
 #endif
 					if(rdamage < 1) rdamage = 1;
 				}
+				// 反射耐性
+				if (sd && sd->sub_return_damage && rdamage > 0) {
+					rdamage = rdamage * (100 - sd->sub_return_damage) / 100;
+					if (rdamage < 1) rdamage = 1;
+				}
 				// デスバウンド時
 				if(sc && sc->data[SC_DEATHBOUND].timer != -1 && !(status_get_mode(src)&MD_BOSS) && path_check_dir(path_calc_dir(src,bl->x,bl->y),status_get_dir(bl)))
 				{
@@ -10296,6 +10358,11 @@ int battle_skill_attack(int attack_type,struct block_list* src,struct block_list
 						rdamage += damage * tsd->long_weapon_damage_return / 100;
 						if(rdamage < 1) rdamage = 1;
 					}
+				}
+				// 反射耐性
+				if (sd && sd->sub_return_damage && rdamage > 0) {
+					rdamage = rdamage * (100 - sd->sub_return_damage) / 100;
+					if (rdamage < 1) rdamage = 1;
 				}
 			}
 			if(rdamage > 0)
@@ -10340,6 +10407,11 @@ int battle_skill_attack(int attack_type,struct block_list* src,struct block_list
 				rdamage += damage;
 				damage = -1;	// ダメージ0だがmissを出さない
 			}
+		}
+		// 反射耐性
+		if (sd && sd->sub_return_damage && rdamage > 0) {
+			rdamage = rdamage * (100 - sd->sub_return_damage) / 100;
+			if (rdamage < 1) rdamage = 1;
 		}
 		// 幻術 -朧幻想-
 		if(damage > 0 && sc && sc->data[SC_GENSOU].timer != -1) {

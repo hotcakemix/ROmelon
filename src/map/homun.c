@@ -51,7 +51,7 @@ struct homun_db homun_db[MAX_HOMUN_DB+MAX_HOMUN_S_DB];
 struct random_homun_data embryo_data[MAX_HOMUN_DB];
 int embryo_default = 6001;
 
-static int homun_exp_table[6][MAX_LEVEL];
+static atn_bignumber homun_exp_table[6][MAX_LEVEL];
 
 static struct homun_skill_tree_entry {
 	int id;
@@ -356,6 +356,11 @@ int homun_calc_status(struct homun_data *hd)
 	int aspd_rate=100,speed_rate=100,atk_rate=100,matk_rate=100,hp_rate=100,sp_rate=100;
 	int flee_rate=100,def_rate=100,mdef_rate=100,critical_rate=100,hit_rate=100;
 
+	//れもん追加
+	const int atk_up[10] =  { 100,300,500,800,1100,1400,1700,2000,2500,3000};
+	const int matk_up[10] = { 50,150,250,400,550,700,850,1000,1500,2000 };
+	//れもん追加ここまで
+
 	nullpo_retr(1, hd);
 
 	hd->atk      = 0;
@@ -379,6 +384,10 @@ int homun_calc_status(struct homun_data *hd)
 	hd->hprecov_rate = 100;
 	hd->sprecov_rate = 100;
 
+	//れもん追加　ホムの耐久用にres、mres追加 650で50%耐性
+	hd->res = 650;
+	hd->mres = 650;
+
 	// チェンジインストラクション
 	if((lv = homun_checkskill(hd,HVAN_INSTRUCT)) > 0)
 	{
@@ -397,6 +406,29 @@ int homun_calc_status(struct homun_data *hd)
 		hp_rate += lv*2;
 		hd->def += lv*4;
 		hd->hprecov_rate += lv*5;
+	}
+	// れもん追加：ホムのスキルによるATK、MATK上昇
+	if ((lv = homun_checkskill(hd, MH_LICHT_GEHORN)) > 0)
+	{
+		hd->atk += atk_up[lv - 1];
+		hd->matk += matk_up[lv - 1];
+	}
+	if ((lv = homun_checkskill(hd, MH_BLAZING_LAVA)) > 0)
+	{
+		hd->atk += atk_up[lv - 1];
+	}
+	if ((lv = homun_checkskill(hd, MH_CLASSY_FLUTTER)) > 0)
+	{
+		hd->matk += matk_up[lv - 1];
+	}
+	if ((lv = homun_checkskill(hd, MH_BRUSHUP_CLAW)) > 0)
+	{
+		hd->atk += atk_up[lv - 1];
+	}
+	if ((lv = homun_checkskill(hd, MH_POLISHING_NEEDLE)) > 0)
+	{
+		hd->atk += atk_up[lv - 1];
+		hd->matk += matk_up[lv - 1];
 	}
 	// ステータス変化による基本パラメータ補正ホムスキル
 	if(hd->sc.count > 0)
@@ -518,6 +550,11 @@ int homun_calc_status(struct homun_data *hd)
 	// パイロクラスティック
 	if(hd->sc.data[SC_PYROCLASTIC].timer != -1) {
 		hd->atk += hd->sc.data[SC_PYROCLASTIC].val2;
+	}
+	// シュタインワンド
+	if (hd->sc.data[SC_STONE_WALL].timer != -1) {
+		hd->def  += hd->sc.data[SC_STONE_WALL].val2;
+		hd->mdef += hd->sc.data[SC_STONE_WALL].val3;
 	}
 	// 補正
 	if(atk_rate != 100)
@@ -769,7 +806,7 @@ static int homun_data_init(struct map_session_data *sd)
 		hd->hungry_cry_timer = add_timer(tick+20*1000,homun_hungry_cry,sd->bl.id,NULL);
 	else
 		hd->hungry_cry_timer = -1;
-	hd->view_size = 0;
+	hd->effect = -1;
 
 	return 0;
 }
@@ -1209,6 +1246,8 @@ void homun_skillup(struct map_session_data *sd, int skill_num)
 		clif_homskillinfoblock(hd->msd);
 	}
 
+	homun_calc_status(hd);		// ステータス計算
+
 	return;
 }
 
@@ -1324,7 +1363,7 @@ int homun_md_gainexp(struct homun_data* hd, struct mob_data* md, atn_bignumber b
 			pc_gainexp(hd->msd, md, mbexp, mjexp, 0);
 	}
 
-	homun_gainexp(hd, md, base_exp, job_exp);
+	//	homun_gainexp(hd, md, base_exp, job_exp);		// れもん変更　ホム経験値取得　主人に渡しそこから10%もらえるように
 
 	return 0;
 }
@@ -1391,7 +1430,7 @@ int homun_gainexp(struct homun_data *hd,struct mob_data *md,atn_bignumber base_e
  * base level側必要経験値計算
  *------------------------------------------
  */
-int homun_nextbaseexp(struct homun_data *hd)
+atn_bignumber homun_nextbaseexp(struct homun_data *hd)
 {
 	atn_bignumber i;
 
@@ -1919,12 +1958,12 @@ static int homun_readdb(void)
 	}
 	i=0;
 	while(fgets(line,1020,fp)){
-		int b0,b1,b2,b3,b4,b5;
+		atn_bignumber b0,b1,b2,b3,b4,b5;
 		if(line[0] == '\0' || line[0] == '\r' || line[0] == '\n')
 			continue;
 		if(line[0]=='/' && line[1]=='/')
 			continue;
-		if(sscanf(line,"%d,%d,%d,%d,%d,%d",&b0,&b1,&b2,&b3,&b4,&b5) != 6)
+		if(sscanf(line, "%lld,%lld,%lld,%lld,%lld,%lld",&b0,&b1,&b2,&b3,&b4,&b5) != 6)
 			continue;
 		homun_exp_table[0][i] = b0;
 		homun_exp_table[1][i] = b1;

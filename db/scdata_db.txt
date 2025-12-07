@@ -868,6 +868,7 @@
 898,SC_SHINKIROU_CALL,0,1,0,0			// 蜃気楼分身
 899,SC_NIGHTMARE,0,1,0,0			// 悪夢
 
+
 //startでは使えないresistをアイテム側で全てクリアするための物
 //1001,SC_RESISTCLEAR		// 全耐性解除
 //1002,SC_RACECLEAR		// 全種族変化解除

@@ -49,9 +49,10 @@
 #define MAX_SUB_SKILL_DAMAGE	10	// スキル耐性を強化できる数
 #define MAX_SKILL_BLOW  5		// スキルを吹き飛ばし化
 #define MAX_SKILL_HEAL_UP	7	// スキルの回復量を強化できる数
-#define MAX_SKILL_FIXCASTRATE	10	// スキルの固定詠唱時間を減らせる数
 #define MAX_SKILL_ADDCASTRATE	10 	//スキルの詠唱時間を減らせる数
+#define MAX_SKILL_FIXCASTRATE    10    // スキルの固定詠唱時間を減らせる数
 #define MAX_SKILL_ADDCASTTIME	10 	//スキルの詠唱時間を減らせる数
+#define MAX_SKILL_ADDFIXCASTTIME    10     //スキルの固定詠唱時間を減らせる数
 #define MAX_SKILL_ADDCOOLDOWN	10 	//スキルのクールタイムを減らせる数
 #define MAX_SKILL_ADDEFF	10	// スキルで追加状態異常化できる数
 #define MAX_SKILL_ADDSPCOST	10 	//スキルの消費SPを増やせる数
@@ -498,7 +499,7 @@ struct map_session_data {
 	char npc_str[256];
 	int chatID;
 	short race;
-	short view_size;
+	short effect;
 	unsigned int booking_id;
 	struct quest_data quest[MAX_QUESTLIST];
 	int questlist;
@@ -635,7 +636,7 @@ struct map_session_data {
 		short value;
 	} hp_drain, sp_drain, hp_drain_, sp_drain_;
 
-	int short_weapon_damage_return,long_weapon_damage_return,magic_damage_return;
+	int short_weapon_damage_return, long_weapon_damage_return, magic_damage_return, sub_return_damage;
 	int weapon_coma_ele[ELE_MAX],weapon_coma_race[RCT_MAX];
 	int weapon_coma_ele2[ELE_MAX],weapon_coma_race2[RCT_MAX];
 	short break_weapon_rate,break_armor_rate;
@@ -895,6 +896,12 @@ struct map_session_data {
 	} skill_addcast;
 
 	struct {
+		short id[MAX_SKILL_ADDFIXCASTTIME];
+		int time[MAX_SKILL_ADDFIXCASTTIME];
+		short count;
+	} skill_addfixcast;
+
+	struct {
 		short id[MAX_SKILL_ADDCOOLDOWN];
 		int time[MAX_SKILL_ADDCOOLDOWN];
 		short count;
@@ -981,7 +988,7 @@ struct npc_data {
 	int group_id;
 	char title[24];
 	unsigned int option;
-	short view_size;
+	short effect;
 	char flag;
 	unsigned char subtype;
 	char click_able;
@@ -1037,7 +1044,7 @@ struct mob_data {
 		unsigned norandomwalk : 1;
 	} state;
 	struct status_data st;
-	short view_size;
+	short effect;
 	short speed;
 	int hp;
 	int target_id,attacked_id,attacked_players;
@@ -1089,7 +1096,7 @@ struct pet_data {
 	int class_;
 	short dir,speed;
 	char name[24];
-	short view_size;
+	short effect;
 	int equip;
 	int target_id;
 	unsigned int next_walktime,last_thinktime;
@@ -1112,13 +1119,14 @@ struct homun_data {
 	struct mmo_homunstatus status;
 	short dir;
 	short speed;
-	short view_size;
+	short effect;
 	int invincible_timer;
 	int hp_sub,sp_sub;
 	int max_hp,max_sp;
 	int str,agi,vit,int_,dex,luk;
 	short atk,matk,def,mdef;
 	short hit,critical,flee,aspd;
+	int res, mres;
 	int intimate;
 	int target_id;
 	unsigned int skillstatictimer[MAX_HOMSKILL];
@@ -1142,7 +1150,7 @@ struct merc_data {
 	char name[24];
 	short dir;
 	short speed;
-	short view_size;
+	short effect;
 	int invincible_timer;
 	int base_level;
 	int hp_sub,sp_sub;
@@ -1173,7 +1181,7 @@ struct elem_data {
 	char name[24];
 	short dir;
 	short speed;
-	short view_size;
+	short effect;
 	int invincible_timer;
 	int base_level;
 	int max_hp,max_sp;
@@ -1377,7 +1385,7 @@ enum {
 	SP_ADDEFFMAGIC,SP_DEF_ELEENEMY,SP_ADD_SP_COST,SP_FIXCASTRATE,SP_ADD_SKILL_SUBHEAL_RATE,   // 1171-1175
 	SP_ADD_CAST_TIME,SP_ADD_COOL_DOWN,SP_ADD_ELEWEAPONDAMAGE_RATE,SP_ADD_ELEMAGICDAMAGE_RATE,   // 1176-1179
 	SP_HP_RATE_PENALTY_TIME,SP_SP_RATE_PENALTY_TIME,SP_MAGIC_ADD_GROUP,SP_MAGIC_ADDSIZE,	// 1180-1183
-	SP_ALLSTATUS,SP_SUB_SKILL_DAMAGE_RATE,	// 1184-1185
+	SP_ALLSTATUS, SP_SUB_SKILL_DAMAGE_RATE, SP_ADD_FIXCAST_TIME, SP_SUB_RETURN_DAMAGE,    // 1184-1187
 
 	// special state 2000-
 	SP_RESTART_FULL_RECORVER=2000,SP_NO_CASTCANCEL,SP_NO_SIZEFIX,SP_NO_MAGIC_DAMAGE,SP_NO_WEAPON_DAMAGE,SP_NO_GEMSTONE,	// 2000-2005

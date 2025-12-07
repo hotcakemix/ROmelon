@@ -23,14 +23,19 @@ pt_bonus_b: 25
 // job経験値ボーナス
 pt_bonus_j: 25
 
+// 獲得経験値の上限を設定
+// 0以下のときは本鯖仕様（現Lvから次Lvへの総必要経験値分×2 - 現経験値 - 1）
+// それ以外のときは%表記（100で1レベル分、150でレベルアップ後50%まで上がる）
+next_exp_limit: 1000
+
 // 配置されている通常MOBの再出現までの時間（0で即沸き、100で通常、200で倍の時間、…）
-mob_delay_rate: 100
+mob_delay_rate: 50
 
 // 配置されている中ボスの再出現までの時間（0で即沸き、100で通常、200で倍の時間、…）
 mob_middle_boss_delay_rate: 0
 
 // 配置されているMVPボスの再出現までの時間（0で即沸き、100で通常、200で倍の時間、…）
-mob_mvp_boss_delay_rate: 10
+mob_mvp_boss_delay_rate: 0
 
 // 自動回復ができなくなる重量を設定。
 natural_heal_weight_rate: 70
@@ -47,20 +52,37 @@ max_hp: 9999999
 // 最大SPを設定。
 max_sp: 9999999
 
+// プレイヤーの基本パラメータの最大値を設定。
+max_parameter: 200
+
+// 3次職のステータス限界
+third_status_max: 200
+
+// 拡張スーパーノービスのステータス限界
+esnv_status_max: 200
+
+// 影狼、朧のステータス限界
+ko_status_max: 200
+
+// リベリオンのステータス限界
+rl_status_max: 200
+
 // 非転生職のHP補正(%)
 normal_hp_rate: 125
 
 // 非転生職のSP補正(%)
 normal_sp_rate: 125
 
-// 拡張スーパーノービスのステータス限界
-esnv_status_max: 130
-
 // サモナーのステータス限界
-sum_status_max: 130
+sum_status_max: 200
 
 // str1毎に増加する最大所持限界
-str_weight: 900
+str_weight: 500
+
+// ステータス100以上の必要ポイント計算を新形式にする
+// 1で新計算式(5毎に必要ポイント+4)
+// 0で旧計算式(10毎に必要ポイント+1)
+new_statusup_calc: 0
 
 
 //==========================================================================
@@ -145,7 +167,7 @@ homun_intimate_rate: 300000
 
 // マスターがホムンクルスの経験値を取得する倍率（100で通常、200で倍…）
 master_get_homun_base_exp: 100
-master_get_homun_job_exp: 100
+master_get_homun_job_exp: 0
 
 // ホムンクルスの名前を変更するかどうかを決定。yesは何度でも名前の変更が可能。
 // noは一度変更するともう変更不可能になる

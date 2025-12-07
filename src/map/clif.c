@@ -75,6 +75,7 @@
 #include "achieve.h"
 #include "bank.h"
 #include "luascript.h"
+#include "pc.h"
 
 /* パケットデータベース */
 #define MAX_PACKET_DB 0xC20
@@ -1101,6 +1102,11 @@ static int clif_set0078(struct map_session_data *sd,unsigned char *buf)
 	WBUFW(buf,82) = sd->status.style;
 	strncpy(WBUFP(buf,84),sd->status.name,24);
 
+	if (sd->status.style)
+		WBUFW(buf, 82) = sd->status.style;
+	else
+		WBUFW(buf, 82) = sd->view_class;
+
 	return WBUFW(buf,2);
 #endif
 }
@@ -1493,6 +1499,11 @@ static int clif_set007b(struct map_session_data *sd,unsigned char *buf)
 	WBUFB(buf,87)=0;
 	WBUFW(buf,88)=sd->status.style;
 	strncpy(WBUFP(buf,90),sd->status.name,24);
+
+	if (sd->status.style)
+		WBUFW(buf, 88) = sd->status.style;
+	else
+		WBUFW(buf, 88) = sd->view_class;
 
 	return WBUFW(buf,2);
 #endif
@@ -5244,8 +5255,8 @@ void clif_spawnpc(struct map_session_data *sd)
 		clif_mshield(sd,sd->sc.data[SC_MILLENNIUMSHIELD].val2);
 	if(sd->sc.data[SC_FORCEOFVANGUARD].timer != -1)
 		clif_mshield(sd,sd->sc.data[SC_FORCEOFVANGUARD].val4);
-	if(sd->view_size!=0)
-		clif_misceffect2(&sd->bl,422+sd->view_size);
+	if (sd->effect >= 0)
+		clif_misceffect2(&sd->bl, sd->effect);
 
 	if (map[sd->bl.m].flag.rain)
 		clif_misceffect3(sd->fd, sd->bl.id, 161);
@@ -5414,8 +5425,8 @@ void clif_spawnnpc(struct npc_data *nd)
 	len = clif_npc0078(nd,buf,NULL);
 	clif_send(buf,len,&nd->bl,AREA);
 
-	if(nd->view_size!=0)
-		clif_misceffect2(&nd->bl,422+nd->view_size);
+	if (nd->effect >= 0)
+		clif_misceffect2(&nd->bl, nd->effect);
 
 	return;
 }
@@ -5722,8 +5733,8 @@ void clif_spawnmob(struct mob_data *md)
 	len = clif_mob0078(md,buf);
 	clif_send(buf,len,&md->bl,AREA);
 
-	if(md->view_size!=0)
-		clif_misceffect2(&md->bl,422+md->view_size);
+	if (md->effect >= 0)
+		clif_misceffect2(&md->bl, md->effect);
 
 	return;
 }
@@ -5866,8 +5877,8 @@ void clif_spawnpet(struct pet_data *pd)
 	len = clif_pet0078(pd,buf);
 	clif_send(buf,len,&pd->bl,AREA);
 
-	if(pd->view_size!=0)
-		clif_misceffect2(&pd->bl,422+pd->view_size);
+	if (pd->effect >= 0)
+		clif_misceffect2(&pd->bl, pd->effect);
 
 	return;
 }
@@ -6011,8 +6022,8 @@ void clif_spawnhom(struct homun_data *hd)
 	//len = clif_hom0078(hd,buf);
 	//clif_send(buf,len,&hd->bl,AREA);
 
-	if(hd->view_size!=0)
-		clif_misceffect2(&hd->bl,422+hd->view_size);
+	if (hd->effect >= 0)
+		clif_misceffect2(&hd->bl, hd->effect);
 
 	return;
 }
@@ -6152,8 +6163,8 @@ void clif_spawnmerc(struct merc_data *mcd)
 #endif
 	clif_send(buf,len,&mcd->bl,AREA);
 
-	if(mcd->view_size!=0)
-		clif_misceffect2(&mcd->bl,422+mcd->view_size);
+	if (mcd->effect >= 0)
+		clif_misceffect2(&mcd->bl, mcd->effect);
 
 	return;
 }
@@ -6293,8 +6304,8 @@ void clif_spawnelem(struct elem_data *eld)
 #endif
 	clif_send(buf,len,&eld->bl,AREA);
 
-	if(eld->view_size!=0)
-		clif_misceffect2(&eld->bl,422+eld->view_size);
+	if (eld->effect >= 0)
+		clif_misceffect2(&eld->bl, eld->effect);
 
 	return;
 }
@@ -12164,8 +12175,8 @@ static void clif_getareachar_pc(struct map_session_data* sd,struct map_session_d
 
 	if(sd->status.manner < 0)
 		clif_changestatus(&sd->bl,SP_MANNER,sd->status.manner);
-	if(dstsd->view_size != 0)
-		clif_misceffect2(&dstsd->bl,422+dstsd->view_size);
+	if (dstsd->effect >= 0)
+		clif_misceffect2(&dstsd->bl, dstsd->effect);
 
 	return;
 }
@@ -12195,8 +12206,8 @@ static void clif_getareachar_npc(struct map_session_data* sd,struct npc_data* nd
 		clif_dispchat(map_id2cd(nd->chat_id),sd->fd);
 	}
 
-	if(nd->view_size!=0)
-		clif_misceffect2(&nd->bl,422+nd->view_size);
+	if (nd->effect >= 0)
+		clif_misceffect2(&nd->bl, nd->effect);
 
 	return;
 }
@@ -12243,8 +12254,8 @@ static void clif_getareachar_mob(struct map_session_data* sd, struct mob_data* m
 	}
 	WFIFOSET(sd->fd,len);
 
-	if(md->view_size!=0)
-		clif_misceffect2(&md->bl,422+md->view_size);
+	if (md->effect >= 0)
+		clif_misceffect2(&md->bl, md->effect);
 
 	return;
 }
@@ -12268,8 +12279,8 @@ static void clif_getareachar_pet(struct map_session_data* sd, struct pet_data* p
 		WFIFOSET(sd->fd,len);
 	}
 
-	if(pd->view_size!=0)
-		clif_misceffect2(&pd->bl,422+pd->view_size);
+	if (pd->effect >= 0)
+		clif_misceffect2(&pd->bl, pd->effect);
 
 	return;
 }
@@ -12297,8 +12308,8 @@ static void clif_getareachar_hom(struct map_session_data* sd, struct homun_data*
 	len = clif_hom007b(hd,WFIFOP(sd->fd,0));
 	WFIFOSET(sd->fd,len);
 
-	if(hd->view_size != 0)
-		clif_misceffect2(&hd->bl,422+hd->view_size);
+	if (hd->effect >= 0)
+		clif_misceffect2(&hd->bl, hd->effect);
 
 	return;
 }
@@ -12326,8 +12337,8 @@ static void clif_getareachar_merc(struct map_session_data* sd, struct merc_data*
 	len = clif_merc007b(mcd,WFIFOP(sd->fd,0));
 	WFIFOSET(sd->fd,len);
 
-	if(mcd->view_size != 0)
-		clif_misceffect2(&mcd->bl,422+mcd->view_size);
+	if (mcd->effect >= 0)
+		clif_misceffect2(&mcd->bl, mcd->effect);
 
 	return;
 }
@@ -12355,8 +12366,8 @@ static void clif_getareachar_elem(struct map_session_data* sd, struct elem_data*
 	len = clif_elem007b(eld,WFIFOP(sd->fd,0));
 	WFIFOSET(sd->fd,len);
 
-	if(eld->view_size != 0)
-		clif_misceffect2(&eld->bl,422+eld->view_size);
+	if (eld->effect >= 0)
+		clif_misceffect2(&eld->bl, eld->effect);
 
 	return;
 }
@@ -13906,6 +13917,7 @@ void clif_status_change(struct block_list *bl, int type, unsigned char flag, uns
 		case SI_DEVIL:
 		case SI_MIRACLE:
 		case SI_TIGEREYE:
+		case SI_MADOGEAR:
 			tick = 0;
 			break;
 	}
@@ -22786,6 +22798,11 @@ static void clif_parse_LoadEndAck(int fd,struct map_session_data *sd, int cmd)
 			clif_status_load_id(sd,SI_RIDING,1);
 		if(pc_isfalcon(sd))
 			clif_status_load_id(sd,SI_FALCON,1);
+		if (pc_isgear(sd)) {
+			int gear_type = ((sd)->s_class.job >= PC_JOB_DK ) ? 2 : 1;
+			clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, gear_type, 0, 0);
+			clif_status_load_id(sd, SI_MADOGEAR, 1);
+		}
 
 		// OnPCLoginイベント
 		if(battle_config.pc_login_script)
@@ -23219,7 +23236,6 @@ static void clif_parse_ActionRequest(int fd,struct map_session_data *sd, int cmd
 	   sd->sc.data[SC_BLADESTOP].timer != -1 ||	// 白刃取り
 	   sd->sc.data[SC_RUN].timer != -1 ||		// タイリギ
 	   sd->sc.data[SC_FORCEWALKING].timer != -1 ||	// 強制移動中
-	   (sd->sc.data[SC_DANCING].timer != -1 && sd->sc.data[SC_LONGINGFREEDOM].timer == -1) ||	// ダンス中
 	   sd->sc.data[SC__MANHOLE].timer != -1 ||		// マンホール
 	   sd->sc.data[SC_CURSEDCIRCLE_USER].timer != -1 ||	// 呪縛陣(使用者)
 	   sd->sc.data[SC_CURSEDCIRCLE].timer != -1 ||		// 呪縛陣
@@ -27675,7 +27691,7 @@ static void clif_parse_buybarter(int fd, struct map_session_data* sd, int cmd)
 	int size = 12;
 	nullpo_retv(sd);
 
-	printf("clif_parse_buybarter\n");
+//	printf("clif_parse_buybarter\n");
 
 	// 死んでいたり、赤エモの時はNPCをクリックできない
 	if (unit_isdead(&sd->bl)) {
@@ -27702,7 +27718,7 @@ static void clif_parse_buybarter(int fd, struct map_session_data* sd, int cmd)
 		list[i].shopindex = RFIFOL(fd, pos + 4);
 		list[i].addamount = RFIFOL(fd, pos + 8);
 		list[i].removeindex = -1;
-		printf("^ -> nameid%d, index%d, amount%d,\n", RFIFOL(fd, pos), RFIFOL(fd, pos + 4), RFIFOL(fd, pos + 8));
+//		printf("^ -> nameid%d, index%d, amount%d,\n", RFIFOL(fd, pos), RFIFOL(fd, pos + 4), RFIFOL(fd, pos + 8));
 	}
 
 
@@ -27728,7 +27744,7 @@ static void clif_parse_buybarter(int fd, struct map_session_data* sd, int cmd)
 static void clif_parse_BarterClose(int fd, struct map_session_data* sd, int cmd)
 {
 	nullpo_retv(sd);
-	printf("clif_parse_BarterClose\n");
+//	printf("clif_parse_BarterClose\n");
 	sd->npc_shopid = 0;
 	return;
 }

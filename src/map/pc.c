@@ -1603,7 +1603,7 @@ int pc_authok(int id,struct mmo_charstatus *st,struct registry *reg)
 	sd->skill_item.lv = -1;
 	sd->skill_item.flag = 0;
 	sd->invincible_timer = -1;
-	sd->view_size = 0;
+	sd->effect = -1;
 	sd->booking_id = 0;
 	sd->npc_idle_timer = -1;
 	sd->npc_idle_tick = tick;
@@ -5730,6 +5730,15 @@ int pc_gainexp(struct map_session_data *sd, struct mob_data *md, atn_bignumber b
 			base_exp = 0;
 	}
 
+	//れもん追加　ホム経験値取得変更
+	if ((base_exp > 0 || job_exp > 0) && sd && sd->hd) { // 経験値があり、かつホムが存在
+		struct homun_data* thd = sd->hd;
+		atn_bignumber shared_base = base_exp / 10;
+		atn_bignumber shared_job = job_exp / 10;
+		homun_gainexp(thd, md, shared_base, shared_job);
+	}
+
+
 	if (battle_config.disp_experience && (base_exp || job_exp)) {
 #if PACKETVER < 20091104
 		char output[128];
@@ -6795,7 +6804,7 @@ static int pc_dead(struct block_list *src,struct map_session_data *sd)
 	if(sd->state.store == STORE_TYPE_BUYINGSTORE)
 		buyingstore_close(sd);
 
-	if(pc_isgear(sd))		// 魔導ギアを解除
+	if (pc_isgear(sd))		// 魔導ギアを解除
 		pc_setoption(sd, (sd->sc.option & ~OPTION_MADOGEAR));
 
 	pc_delspiritball(sd,sd->spiritball.num,0);
@@ -7977,47 +7986,41 @@ void pc_setoption(struct map_session_data *sd, unsigned int type)
 {
 	nullpo_retv(sd);
 
-	//れもん追加修正魔導ギアとカート合ってるのかはわからん　20220406蔵（動作確認済み）それ以下は未確認
+	// ───── マドギアに乗る処理 ─────
 	if ((type & OPTION_MADOGEAR) && !pc_isgear(sd)) {
+
+		int gear_type = ((sd)->s_class.job >= PC_JOB_DK) ? 2 : 1;
+
+		// カート併用処理
 		if (pc_iscarton(sd)) {
 			type |= (sd->sc.option & OPTION_CARTMASK) | OPTION_PUSHCART;
 		}
+
 #if PACKETVER > 20191106
-		clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, 2, 0, 0);
+		clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, gear_type, 0, 0);
 		clif_status_load_id(sd, SI_MADOGEAR, 1);
 #endif
 	}
+
+	// ───── マドギアから降りる処理 ─────
 	else if (!(type & OPTION_MADOGEAR) && pc_isgear(sd)) {
+
+		// ギア系SC解除
 		status_change_end(&sd->bl, SC_ACCELERATION, -1);
 		status_change_end(&sd->bl, SC_HOVERING, -1);
 		status_change_end(&sd->bl, SC_OVERHEAT, -1);
 		status_change_end(&sd->bl, SC_SHAPESHIFT, -1);
+
+		// カート併用処理（ギアから降りたあとでも必要）
 		if (pc_iscarton(sd)) {
 			type |= (sd->sc.option & OPTION_CARTMASK) | OPTION_PUSHCART;
 		}
+
 #if PACKETVER > 20191106
-			clif_status_load_id(sd, SI_MADOGEAR, 0);
+		clif_status_load_id(sd, SI_MADOGEAR, 0);
 #endif
 	}
 
-
-	/*
-	if (((type & OPTION_MADOGEAR) || pc_isgear(sd)) && pc_iscarton(sd)) {
-		type |= (sd->sc.option & OPTION_CARTMASK) | OPTION_PUSHCART;
-	#if PACKETVER > 20191106
-		clif_status_change_id(sd, sd->bl.id, SI_MADOGEAR, 1, 9999, 2, 0, 0);
-	#endif
-	}
-	if (!(type & OPTION_MADOGEAR) && pc_isgear(sd)) {
-		status_change_end(&sd->bl, SC_ACCELERATION, -1);
-		status_change_end(&sd->bl, SC_HOVERING, -1);
-		status_change_end(&sd->bl, SC_OVERHEAT, -1);
-		status_change_end(&sd->bl, SC_SHAPESHIFT, -1);
-	#if PACKETVER > 20191106
-		clif_status_load_id(sd, SI_MADOGEAR, 0);
-	#endif
-	}
-	*/
 	if( (type&OPTION_FALCON) && !pc_isfalcon(sd) ) {
 		clif_status_load_id(sd,SI_FALCON,1);
 	}
@@ -8197,9 +8200,9 @@ int pc_setgear(struct map_session_data *sd)
 {
 	nullpo_retr(0, sd);
 
-	if(pc_checkskill(sd,NC_MADOLICENCE) > 0) { // 魔導ギアライセンススキル所持
-		pc_setoption(sd,OPTION_MADOGEAR);
-	}
+	if (pc_checkskill(sd, NC_MADOLICENCE) > 0)  // 魔導ギアライセンススキル所持
+		pc_setoption(sd, OPTION_MADOGEAR);
+
 	return 0;
 }
 

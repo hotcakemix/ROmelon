@@ -33,7 +33,9 @@ struct job_db {
 	int max_ap;
 	int bonus[PC_UPPER_MAX][MAX_LEVEL];
 	int aspd_base[WT_MAX+1];
-} job_db[PC_JOB_MAX];
+};
+
+extern struct job_db job_db[PC_JOB_MAX];
 
 struct status_pretimer {
 	int timer;
@@ -826,7 +828,7 @@ enum {
 	SC_CHATTERING			= 651,
 	SC_GROOMING				= 652,
 	SC_PROTECTIONOFSHRIMP	= 653,
-	SC_SPIRITOFLAND			= 654,
+	//SC_SPIRITOFLAND			= 654,
 	SC_BURNT				= 655,
 	SC_CHILL				= 656,
 	SC_MAXPAIN				= 657,
@@ -1070,6 +1072,14 @@ enum {
 	SC_SHADOW_CLOCK				= 897,
 	SC_SHINKIROU_CALL			= 898,
 	SC_NIGHTMARE				= 899,
+	SC_STONE_WALL				= 900,		//シュタインワンド
+	SC_ANCILLA					= 901,		//アンシラ
+	SC_SPIRITOFLAND				= 902,		//大地の魂　マタタビランス
+	SC_SPIRITOFLAND2			= 903,		//大地の魂　マタタビの根っこ　ニャングラス
+	SC_SPIRITOFLAND3			= 904,		//大地の魂　イヌハッカメテオ
+	SC_SPIRITOFLAND4			= 905,		//大地の魂　イヌハッカシャワー
+	SC_ENSEMBLEFATIGUE			= 906,		//合奏疲労
+	SC_WILD_WALK				= 907,		//ワイルドウォーク
 
 	// startでは使えないresistをアイテム側で全てクリアするための物
 	SC_RESISTCLEAR          = 1001,
@@ -1153,10 +1163,10 @@ enum {
 	//SI_MASK           = 67,
 	SI_SPEARQUICKEN     = 68,
 	//SI_BDPLAYING      = 69,
-	//SI_WHISTLE        = 70,
-	//SI_ASSASSINCROSS  = 71,
-	//SI_POEMBRAGI      = 72,
-	//SI_APPLEIDUN      = 73,
+	SI_WHISTLE        = 70,
+	SI_ASSASSINCROSS  = 71,
+	SI_POEMBRAGI      = 72,
+	SI_APPLEIDUN      = 73,
 	//SI_HUMMING        = 74,
 	//SI_DONTFORGETME   = 75,
 	//SI_FORTUNEKISS    = 76,
@@ -2071,9 +2081,9 @@ enum {
 	SI_SHA = 1064,
 	//SI_INFINITY_DRINK = 1065,
 	//SI_HUNTING_EVENT = 1083,
-	//SI_ENSEMBLEFATIGUE = 1088,
+	SI_ENSEMBLEFATIGUE = 1088,
 	//SI_ADAPTATION = 1089,
-	//SI_ANCILLA = 1095,
+	SI_ANCILLA = 1095,
 	SI_WEAPONBLOCK_ON = 1107,
 	//SI_ASSUMPTIO_BUFF = 1121,
 	//SI_BASILICA_BUFF = 1122,
@@ -2227,7 +2237,7 @@ enum {
 	SI_ELEMENTAL_VEIL = 1301,
 	//SI_HOMUN_TIME = 1303,
 	//SI_POISON_MIST = 1310,
-	//SI_STONE_WALL = 1313,
+	SI_STONE_WALL = 1313,
 	//SI_OVERBRANDREADY = 1315,
 	//SI_SHIELDSPELL = 1316,
 	//SI_CLOUD_POISON = 1318,
@@ -2305,6 +2315,7 @@ enum {
 	//SI_VR_BOOK006 = 1440,
 	//SI_VR_BOOK007 = 1441,
 
+	SI_WILD_WALK = 1666,
 };
 
 // opt1テーブル

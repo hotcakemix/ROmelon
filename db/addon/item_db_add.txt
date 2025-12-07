@@ -1,8 +1,9 @@
 //item_db.txtへオーバーライド
 //ID,Name,Jname,Type,Price,Sell,Weight,ATK,DEF,Range,Slot,Job,Gender,Loc,wLV,eLV,View,Refine,{UseScript},{EquipScript}
-2672,Anniversary_Ring,3周年記念指輪,4,20,,100,,,,0,2074075135,2,136,,1,,,{  },{ bonus bAllStatus,500; bonus bAddSpeed,10; bonus bFlee2,999; bonus bAspdRate,100; bonus bDef,10000; bonus bMdef,10000; bonus2 bFixCastrate,-70,1; bonus bSkillDelayRate,-100; bonus2 bAddFixCastRate,"MG_COLDBOLT",500; bonus2 bAddFixCastRate,"MG_FIREBOLT",500; bonus2 bAddFixCastRate,"MG_LIGHTNINGBOLT",500; }
+2672,Anniversary_Ring,3周年記念指輪,4,20,,100,,,,0,2074075135,2,136,,1,,,{  },{ bonus bMaxHP,99999999; bonus2 bHPRatePenaltyTime,1000,-50; bonus bMaxSP,500000; }
 19558,Kamagi_Hat_T,衣装カラス帽子,4,10,,0,,,,0,2074075135,2,1024,,1,2596,0,{  },{ bonus bVit,1; skill "SH_HOGOGONG_STRIKE",7; skill "SU_SPIRITOFLAND",1; skill "SHC_SHADOW_EXCEED",5; bonus bSkillDelayRate,-100; }
 
+925000,Card,カード,6,,,10,,,,,,,,,,,,{  },{  }
 
 
 //オリジナル
@@ -15,8 +16,108 @@
 920102,sp,ショップポイント100,2,,,0,,,,,2074075135,2,,,,,,{ set PC_SHOP_POINT,PC_SHOP_POINT + 100; },{  }
 920103,sp,ショップポイント1000,2,,,0,,,,,2074075135,2,,,,,,{ set PC_SHOP_POINT,PC_SHOP_POINT + 1000; },{  }
 920104,ori,無限凸面鏡,2,,,0,,,,,2074075135,2,,,,,,{ sc_start SC_BOSSMAPINFO,600000,0; },{  }
-920105,ori,無限ハエの羽,2,60,,0,,,,,2074075135,2,,,,,,{ warp "Random",0,0; },{  }
+920105,ori,無限ハエの羽,2,,,0,,,,,2074075135,2,,,,,,{ warp "Random",0,0; },{  }
 920106,ori,巨大なハエの羽,2,,,0,,,,,2074075135,2,,,,,,{ callfunc "ItemdbPartyCall"; },{  }
+//換金アイテム
+920200,ori,銅貨,3,,,0,,,,,,,,,,,,{  },{  }
+920201,ori,銀貨,3,,,0,,,,,,,,,,,,{  },{  }
+920202,ori,金貨,3,,,0,,,,,,,,,,,,{  },{  }
+920203,ori,白金貨,3,,,0,,,,,,,,,,,,{  },{  }
+920204,ori,銅貨袋,2,,,0,,,,,2074075135,,,,,,,{ getitem 920200,rand(1,10); },{  }
+920205,ori,銀貨袋,2,,,0,,,,,2074075135,,,,,,,{ getitem 920201,rand(1,10); },{  }
+920206,ori,金貨袋,2,,,0,,,,,2074075135,,,,,,,{ getitem 920202,rand(1,10); },{  }
+920207,ori,白金貨袋,2,,,0,,,,,2074075135,,,,,,,{ getitem 920203,rand(1,10); },{  }
+
+
+
+//オリジナルカード
+925000,Card,ソードマンカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"SM_BASH",10*(readparam(bStr)/5); }
+925001,Card,マジシャンカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"MG_COLDBOLT",7*(readparam(bInt)/5); bonus2 bAddSkillDamageRate,"MG_LIGHTNINGBOLT",7*(readparam(bInt)/5); bonus2 bAddSkillDamageRate,"MG_FIREBOLT",7*(readparam(bInt)/5); }
+925002,Card,アーチャーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"AC_DOUBLE",10*(readparam(bDex)/5); }
+925003,Card,シーフカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"TF_POISON",10*(readparam(bAgi)/5); }
+925004,Card,マーチャントカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"MC_MAMMONITE",10*(readparam(bStr)/5); }
+925005,Card,アコライトカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"AL_HOLYLIGHT",10*(readparam(bInt)/5); }
+925006,Card,ソードマンカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "SM_RECOVERY",10; }
+925007,Card,マジシャンカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "WZ_ESTIMATION",1; }
+925008,Card,アーチャーカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "AC_CONCENTRATION",10; }
+925009,Card,シーフカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "TF_MISS",10; }
+925010,Card,マーチャントカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "MC_DISCOUNT",10; skill "MC_OVERCHARGE",10; }
+925011,Card,アコライトカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "AL_CRUCIS",10; }
+925012,Card,ナイトカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"KN_BOWLINGBASH",7*(readparam(bStr)/5); }
+925013,Card,ウィザードカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"WZ_EARTHSPIKE",7*(readparam(bInt)/5); bonus2 bAddSkillDamageRate,"WZ_JUPITEL",7*(readparam(bInt)/5); }
+925014,Card,ハンターカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"HT_CLAYMORETRAP",7*(readparam(bDex)/5); }
+925015,Card,ブラックスミスカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"MC_CARTREVOLUTION",10*(readparam(bStr)/5); }
+925016,Card,アサシンカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"AS_SONICBLOW",7*(readparam(bAgi)/5); }
+925017,Card,プリーストカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"PR_MAGNUS",7*(readparam(bInt)/5); }
+925018,Card,クルセイダーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"CR_HOLYCROSS",7*(readparam(bStr)/5); }
+925019,Card,ダンサーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"DC_THROWARROW",7*(readparam(bDex)/5); }
+925020,Card,バードカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"BA_MUSICALSTRIKE",7*(readparam(bDex)/5); }
+925021,Card,セージカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"WZ_EARTHSPIKE",10*(readparam(bInt)/5); }
+925022,Card,ローグカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"RG_BACKSTAP",7*(readparam(bAgi)/5); }
+925023,Card,モンクカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"MO_FINGEROFFENSIVE",7*(readparam(bStr)/5); }
+925024,Card,アルケミストカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"AM_ACIDTERROR",7*(readparam(bInt)/5); }
+925025,Card,ロードナイトカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"LK_SPIRALPIERCE",5*(readparam(bStr)/5); }
+925026,Card,スナイパーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"SN_SHARPSHOOTING",5*(readparam(bDex)/5); }
+925027,Card,アサシンクロスカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"ASC_BREAKER",5*(readparam(bAgi)/5); }
+925028,Card,ハイウィザードカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"HW_NAPALMVULCAN",5*(readparam(bInt)/5); }
+925029,Card,ハイプリーストカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddEleMagicDamageRate,Ele_Holy,1*(readparam(bInt)/5); }
+925030,Card,ホワイトスミスカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"WS_CARTTERMINATION",5*(readparam(bStr)/5); }
+925031,Card,ロードナイトカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "LK_CONCENTRATION",3; }
+925032,Card,スナイパーカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "SN_SIGHT",5; }
+925033,Card,アサシンクロスカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "AS_CLOAKING",5; }
+925034,Card,ハイウィザードカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "HW_MAGICPOWER",5; }
+925035,Card,ハイプリーストカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "PR_KYRIE",5; }
+925036,Card,ホワイトスミスカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "WS_OVERTHRUSTMAX",3; }
+925037,Card,パラディンカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"PA_SHIELCHAIN",5*(readparam(bVit)/5); }
+925038,Card,ジプシーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"CG_ARROWVULCAN",5*(readparam(bDex)/5); }
+925039,Card,クラウンカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"CG_ARROWVULCAN",5*(readparam(bDex)/5); }
+925040,Card,プロフェッサーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"WZ_HEAVENDRIVE",7*(readparam(bInt)/5); }
+925041,Card,チェイサーカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"RG_RAID",7*(readparam(bAgi)/5); }
+925042,Card,チャンピオンカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"CH_CHAINCRUSH",5*(readparam(bStr)/5); }
+925043,Card,クリエイターカード,6,,,10,,,,,,,2,,,,,{  },{ bonus2 bAddSkillDamageRate,"CR_ACIDDEMONSTRATION",3*(readparam(bInt)/5); }
+925044,Card,パラディンカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "PA_SACRIFICE",3; }
+925045,Card,ジプシーカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "DC_SERVICEFORYOU",5; }
+925046,Card,クラウンカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "BA_POEMBRAGI",5; }
+925047,Card,プロフェッサーカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "PF_DOUBLECASTING",3; }
+925048,Card,チェイサーカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "ST_REJECTSWORD",3; }
+925049,Card,チャンピオンカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "MO_CALLSPIRITS",5; skill "CH_SOULCOLLECT",1; }
+925050,Card,クリエイターカードN,6,,,10,,,,,,,512,,,,,{  },{ skill "CR_FULLPROTECTION",3; }
+
+
+
+
+
+
+//ここから重複なし
+926000,Card,ソニックブレイズカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926001,Card,ドラグーンカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926002,Card,火と水の調和カード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926003,Card,天と地の調和カード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926004,Card,闇と念の調和カード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926005,Card,荒れ狂う風カード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926006,Card,ウォーグアイカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926007,Card,メカニカルレンチカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926008,Card,イグニスアックスカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926009,Card,反撃の心得カード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926010,Card,ウィークカタールカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926011,Card,サポートステッキカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+926012,Card,ヒーラーステッキカード,6,,,10,,,,,,,2,,,,,{  },{  }"
+
+926013,Card,バニシングブランド,6,,,10,,,,,,,2,,,,,{  },{  }"
+926014,Card,シールドレイ,6,,,10,,,,,,,2,,,,,{  },{  }"
+926015,Card,ポイズンサイキッカー,6,,,10,,,,,,,2,,,,,{  },{  }"
+926016,Card,天変地異,6,,,10,,,,,,,2,,,,,{  },{  }"
+926017,Card,厳,6,,,10,,,,,,,2,,,,,{  },{  }"
+926018,Card,シンフォニーウィップ,6,,,10,,,,,,,2,,,,,{  },{  }"
+926019,Card,マエストロハープ,6,,,10,,,,,,,2,,,,,{  },{  }"
+926020,Card,生命の剣,6,,,10,,,,,,,2,,,,,{  },{  }"
+926021,Card,カートオブヘル,6,,,10,,,,,,,2,,,,,{  },{  }"
+926022,Card,フェイタルショット,6,,,10,,,,,,,2,,,,,{  },{  }"
+926023,Card,トライアングルボム,6,,,10,,,,,,,2,,,,,{  },{  }"
+926024,Card,双龍天,6,,,10,,,,,,,2,,,,,{  },{  }"
+926025,Card,修羅光,6,,,10,,,,,,,2,,,,,{  },{  }"
+
+
 
 //オリジナル消耗品
 930000,ori,使わない,2,,,10,,,,,2074075135,2,,,,,,{ getitem 15277,1; getitem 22187,1; getitem 20917,1; },{  }
@@ -35,6 +136,39 @@
 930013,ori,修羅職パッケ,2,,,10,,,,,2074075135,2,,,,,,{ getitem 15408,1; getitem 20951,1; getitem 22213,1; getitem 32247,1; getitem 19447,1; getitem 16098,1; },{  }
 930014,ori,シャドウチェイサー職パッケ,2,,,10,,,,,2074075135,2,,,,,,{ getitem 450011,1; getitem 400015,1; getitem 480006,1; getitem 470010,1; getitem 490009,1; getitem 700004,1; },{  }
 930015,ori,ジェネティック職パッケ,2,,,10,,,,,2074075135,2,,,,,,{ getitem 15425,1; getitem 19473,1; getitem 20971,1; getitem 22230,1; getitem 32264,1; getitem 1100,1; },{  }
+
+
+
+//オリジナル装備
+//オリ武器970000
+970000,oriw,マスタリーソード,5,100000,,500,150:130,,1,3,8668322,2,2,4,1,2,1,{  },{  }
+970001,oriw,マスタリークレイモア,9,100000,,500,280:230,,1,3,16514,2,34,4,1,3,1,{  },{  }
+970002,oriw,マスタリースピアー,5,100000,,500,150:110,,3,3,16514,2,2,4,1,4,1,{  },{  }
+970003,oriw,マスタリーランス,9,100000,,500,200:230,,3,3,16514,2,34,4,1,5,1,{  },{  }
+970004,oriw,マスタリーロッド,5,100000,,500,60:180,,1,3,142705428,2,2,4,1,10,1,{  },{  }
+970005,oriw,マスタリースタッフ,9,100000,,500,120:270,,1,3,142705428,2,34,4,1,23,1,{  },{  }
+970006,oriw,マスタリーナイフ,5,100000,,500,120:120,,1,3,681533167,2,2,4,1,1,1,{  },{  }
+970007,oriw,マスタリーアックス,5,100000,,500,180:110,,1,3,8672418,2,2,4,1,6,1,{  },{  }
+970008,oriw,マスタリーツーハンドアックス,9,100000,,500,320:200,,1,3,279714,2,34,4,1,7,1,{  },{  }
+970009,oriw,マスタリークラブ,5,100000,,500,150:110,,1,3,8701362,2,2,4,1,8,1,{  },{  }
+970010,oriw,マスタリーブック,5,100000,,500,120:140,,1,3,33620224,2,2,4,1,15,1,{  },{  }
+970011,oriw,マスタリーボウ,8,100000,,500,160:170,,5,3,1705992,2,34,4,1,11,1,{  },{  }
+970012,oriw,マスタリーロープ,5,100000,,500,150:120,,2,3,1048576,2,2,4,1,14,1,{  },{  }
+970013,oriw,マスタリーバイオリン,5,100000,,50,180:120,,1,3,524288,2,2,4,1,13,1,{  },{  }
+970014,oriw,マスタリーフィスト,5,100000,,50,140:100,,1,3,33024,2,2,4,1,81,1,{  },{  }
+970015,oriw,マスタリー風魔手裏剣,9,100000,,500,150:160,,1,3,536870912,2,34,4,1,22,1,{  },{  }
+970016,oriw,マスタリーカタール,9,100000,,500,150:250,,1,3,4096,2,34,4,1,16,1,{  },{  }
+970017,oriw,マスタリーハンドガン,15,100000,,50,70,,7,3,268435456,2,34,4,1,17,1,{  },{  }
+970018,oriw,マスタリーショットガン,15,100000,,500,180,,9,3,268435456,2,34,4,1,20,1,{  },{ bonus bSplashAddRange,1; }
+970019,oriw,マスタリーガトリングガン,15,100000,,500,120,,9,3,268435456,2,34,4,1,19,1,{  },{  }
+970020,oriw,マスタリーライフル,15,100000,,500,170,,9,3,268435456,2,34,4,1,18,1,{  },{  }
+970021,oriw,マスタリーグレネードガン,15,100000,,500,210,,9,3,268435456,2,34,4,1,21,1,{  },{  }
+970022,oriw,マスタリー猫じゃらし,5,100000,,500,150:180,,1,3,1073741824,2,2,4,1,100,1,{  },{  }
+
+//スカイ・アース装備970050
+
+
+
 
 
 //オリジナルセット装備210000～
@@ -386,7 +520,6 @@
 211909,set,ファラ靴,4,,,0,,,,0,2074075135,2,524288,,1,,0,{  },{ bonus bSpeedAddRate,25; bonus2 bFixCastrate,-50,0; }
 211910,set,ファラアクセ右,4,,,0,,,,0,2074075135,2,1048576,,1,,0,{  },{ bonus bInt,10; bonus bDex,10; }
 211911,set,ファラアクセ左,4,,,0,,,,0,2074075135,2,2097152,,1,,0,{  },{ bonus2 bAddEleMagicDamageRate,Ele_All,15; }
-
 
 
 

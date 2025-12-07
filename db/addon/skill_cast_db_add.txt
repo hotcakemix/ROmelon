@@ -1,2 +1,2 @@
-//skill_cast_db.txtへオーバーライド
+//skill_cast_db.txt＠AthenaDB計画 2005/04/14 00:00:00 +0900 (JST),0,,0,,
 //id,cast_list,fixed_cast_list,delay_list,cool_list,upkeep_time,upkeep_time2

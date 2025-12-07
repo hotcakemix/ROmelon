@@ -54,6 +54,7 @@ struct mobdb_data {
 	int base_exp,job_exp;
 	int atk1,atk2;
 	int def,mdef;
+	int res, mres;
 	int str,agi,vit,int_,dex,luk;
 	int range,range2,range3;
 	short size,race;
@@ -69,7 +70,7 @@ struct mobdb_data {
 		int p;
 	} mvpitem[3];
 	int view_class;
-	short view_size;
+	short effect;
 	short hair,hair_color,clothes_color;
 	short weapon,shield,robe,head_top,head_mid,head_bottom;
 	short style;

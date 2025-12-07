@@ -281,12 +281,12 @@ static int unit_walktoxy_timer(int tid,unsigned int tick,int id,void *data)
 	if(!pd && !nd) skill_unit_move(bl,tick,1);
 
 	if(sd) {
-		if(sd->sc.data[SC_DANCING].timer != -1 && sd->sc.data[SC_LONGINGFREEDOM].timer == -1)	// Not 拘束しないで
-		{
-			skill_unit_move_unit_group(map_id2sg(sd->sc.data[SC_DANCING].val2),sd->bl.m,dx,dy);
-			sd->dance.x += dx;
-			sd->dance.y += dy;
-		}
+//		if(sd->sc.data[SC_DANCING].timer != -1 && sd->sc.data[SC_LONGINGFREEDOM].timer == -1)	// Not 拘束しないで
+//		{
+//			skill_unit_move_unit_group(map_id2sg(sd->sc.data[SC_DANCING].val2),sd->bl.m,dx,dy);
+//			sd->dance.x += dx;
+//			sd->dance.y += dy;
+//		}
 		if(sd->sc.data[SC_WARM].timer != -1)
 			skill_unit_move_unit_group(map_id2sg(sd->sc.data[SC_WARM].val4),sd->bl.m,dx,dy);
 		if(sd->sc.data[SC_NEUTRALBARRIER_MASTER].timer != -1)
@@ -357,12 +357,12 @@ static int unit_walktoxy_timer(int tid,unsigned int tick,int id,void *data)
 			if(sd->sc.data[SC_MARIONETTE2].timer != -1) {
 				skill_marionette2(sd,sd->sc.data[SC_MARIONETTE2].val2);
 			}
-			/* ダンスチェック */
-			if(sd->sc.data[SC_LONGINGFREEDOM].timer != -1) {
-				// 範囲外に出たら止める
-				if(path_distance(sd->bl.x,sd->bl.y,sd->dance.x,sd->dance.y) > 4)
-					skill_stop_dancing(&sd->bl,0);
-			}
+//			/* ダンスチェック */
+//			if(sd->sc.data[SC_LONGINGFREEDOM].timer != -1) {
+//				// 範囲外に出たら止める
+//				if(path_distance(sd->bl.x,sd->bl.y,sd->dance.x,sd->dance.y) > 4)
+//					skill_stop_dancing(&sd->bl,0);
+//			}
 			/* ヘルモードチェック */
 			if(battle_config.hermode_wp_check &&
 			   sd->sc.data[SC_DANCING].timer != -1 &&
@@ -1799,24 +1799,25 @@ int unit_can_move(struct block_list *bl)
 			sc->data[SC_HANDICAPSTATE_FROSTBITE].timer != -1 ||		// 急冷
 			sc->data[SC_HANDICAPSTATE_SWOONING].timer != -1 ||		// 失神
 			sc->data[SC_HANDICAPSTATE_LIGHTNINGSTRIKE].timer != -1 ||		// 激流
-			sc->data[SC_HANDICAPSTATE_CRYSTALLIZATION].timer != -1			// 結晶化
+			sc->data[SC_HANDICAPSTATE_CRYSTALLIZATION].timer != -1 ||		// 結晶化
+			sc->data[SC_INTENSIVE_AIM].timer != -1		// インテンシブエイム
 		)
 			return 0;
 
-		if(sc->data[SC_LONGINGFREEDOM].timer == -1 && sc->data[SC_DANCING].timer != -1)
-		{
-			struct skill_unit_group *sg = NULL;
-
-			// 合奏スキル演奏中
-			if(sc->data[SC_DANCING].val4)
-				return 0;
-			// 単独合奏時に動けない設定
-			sg = map_id2sg(sc->data[SC_DANCING].val2);
-			if(sg && skill_get_unit_flag(sg->skill_id, sg->skill_lv) & UF_ENSEMBLE) {
-				if(!sd || (!battle_config.player_skill_partner_check && !(battle_config.sole_concert_type & 1)))
-					return 0;
-			}
-		}
+//		if(sc->data[SC_LONGINGFREEDOM].timer == -1 && sc->data[SC_DANCING].timer != -1)
+//		{
+//			struct skill_unit_group *sg = NULL;
+//
+//			// 合奏スキル演奏中
+//			if(sc->data[SC_DANCING].val4)
+//				return 0;
+//			// 単独合奏時に動けない設定
+//			sg = map_id2sg(sc->data[SC_DANCING].val2);
+//			if(sg && skill_get_unit_flag(sg->skill_id, sg->skill_lv) & UF_ENSEMBLE) {
+//				if(!sd || (!battle_config.player_skill_partner_check && !(battle_config.sole_concert_type & 1)))
+//					return 0;
+//			}
+//		}
 
 		if((sc->data[SC_BASILICA].timer != -1 && sc->data[SC_BASILICA].val2 == bl->id) ||
 		   (sc->data[SC_GOSPEL].timer != -1 && sc->data[SC_GOSPEL].val2 == bl->id))
@@ -2317,34 +2318,34 @@ int unit_changeviewsize(struct block_list *bl,int size)
 {
 	nullpo_retr(0, bl);
 
-	size = (size < 0)? -1: (size > 0)? 1: 0;
+	size = (size < 0) ? 421 : (size > 0) ? 423 : -1;
 
 	if(bl->type == BL_PC) {
 		struct map_session_data *sd = (struct map_session_data*)bl;
-		sd->view_size = size;
+		sd->effect = size;
 	} else if(bl->type == BL_MOB) {
 		struct mob_data *md = (struct mob_data *)bl;
-		md->view_size = size;
+		md->effect = size;
 	} else if(bl->type == BL_PET) {
 		struct pet_data *pd = (struct pet_data *)bl;
-		pd->view_size = size;
+		pd->effect = size;
 	} else if(bl->type == BL_HOM) {
 		struct homun_data *hd = (struct homun_data *)bl;
-		hd->view_size = size;
+		hd->effect = size;
 	} else if(bl->type == BL_MERC) {
 		struct merc_data *mcd = (struct merc_data *)bl;
-		mcd->view_size = size;
+		mcd->effect = size;
 	} else if(bl->type == BL_ELEM) {
 		struct elem_data *eld = (struct elem_data *)bl;
-		eld->view_size = size;
+		eld->effect = size;
 	} else if(bl->type == BL_NPC) {
 		struct npc_data *nd = (struct npc_data *)bl;
-		nd->view_size = size;
+		nd->effect = size;
 	} else {
 		return 0;
 	}
-	if(size != 0)
-		clif_misceffect2(bl,421+size);
+	if (size != -1)
+		clif_misceffect2(bl, size);
 	return 0;
 }
 

@@ -405,7 +405,7 @@ int mob_spawn(int id)
 	md->ud.to_x = md->bl.x = x;
 	md->ud.to_y = md->bl.y = y;
 	md->dir = 0;
-	md->view_size = mobdb_search(md->class_)->view_size;
+	md->effect = mobdb_search(md->class_)->effect;
 
 	memset(&md->state,0,sizeof(md->state));
 
@@ -472,6 +472,10 @@ int mob_spawn(int id)
 	md->st.mdef   = mobdb_search(md->class_)->mdef;
 	md->st.hit    = status_get_dex(&md->bl) + status_get_lv(&md->bl);
 	md->st.flee   = status_get_agi(&md->bl) + status_get_lv(&md->bl);
+
+	//れもん追加res,mres
+	md->st.res	  = mobdb_search(md->class_)->res;
+	md->st.mres	  = mobdb_search(md->class_)->mres;
 
 	md->hp = status_get_max_hp(&md->bl);
 	if(md->hp <= 0) {
@@ -2448,12 +2452,6 @@ static int mob_dead(struct block_list *src,struct mob_data *md,int type,unsigned
 				    (tmpsd->sc.data[SC_HIDING].timer == -1    || !battle_config.noexp_hiding) )		// ハイドしていない
 					pc_gainexp(tmpsd, md, base_exp, job_exp, 0);
 			}
-			if ((base_exp > 0 || job_exp > 0) && sd && sd->hd) { // 経験値があり、かつホムが存在
-				struct homun_data* thd = sd->hd;
-				atn_bignumber shared_base = base_exp / 10;
-				atn_bignumber shared_job = job_exp / 10;
-				homun_gainexp(thd, md, shared_base, shared_job);
-			}
 		}
 		// 公平分配
 		for(i = 0; i < pnum; i++)
@@ -4356,6 +4354,7 @@ static int mob_readdb(void)
 		"db/addon/mob_db_add.txt"
 	};
 	const char *filename2;
+	const char* filename3;
 
 	for(n = 0; n < sizeof(filename)/sizeof(filename[0]); n++) {
 		fp = fopen(filename[n], "r");
@@ -4457,7 +4456,7 @@ static int mob_readdb(void)
 
 			memset(id->skill, 0, sizeof(id->skill));
 			id->maxskill      = 0;
-			id->view_size     = 0;
+			id->effect		  = -1;
 			id->sex           = SEX_FEMALE;
 			id->hair          = 0;
 			id->hair_color    = 0;
@@ -4516,6 +4515,52 @@ static int mob_readdb(void)
 
 	printf("read %s done\n", filename2);
 
+	// mob_res_mres_db.txt
+	filename3 = "db/mob_res_mres_db.txt";
+	fp = fopen(filename3, "r");
+	if (fp == NULL)
+		return 0; // 無くてもOK
+
+	int count = 0;
+
+	while (fgets(line, sizeof(line), fp)) {
+		int class_, res, mres;
+		char* p = line;
+		char* str[4];
+		int i;
+
+		// 空行・コメント行スキップ
+		if (line[0] == '\0' || line[0] == '\r' || line[0] == '\n')
+			continue;
+		if (line[0] == '/' && line[1] == '/')
+			continue;
+
+		// カンマ区切りで分割（最大4要素）
+		for (i = 0; i < 4; i++) {
+			str[i] = (i == 0) ? strtok(p, ",") : strtok(NULL, ",");
+			if (str[i] == NULL)
+				break;
+		}
+		if (i < 4) // 必須4項目（id, 日本名, res, mres）がない場合スキップ
+			continue;
+
+		class_ = atoi(str[0]);
+		if (!mobdb_exists(class_))
+			continue;
+
+		id = mobdb_search(class_);
+		res = atoi(str[2]);
+		mres = atoi(str[3]);
+
+		// ここでres/mresをmob_db構造体に代入
+		id->res = res;
+		id->mres = mres;
+		count++;
+	}
+	fclose(fp);
+
+	printf("read %s count(%d) done\n", filename3,count);
+
 	return 0;
 }
 
@@ -4525,68 +4570,68 @@ static int mob_readdb(void)
  */
 static int mob_readdb_mobavail(void)
 {
-	FILE *fp;
+	FILE* fp;
 	char line[1024];
 	int ln = 0;
-	int class_,j,k;
-	char *str[16],*p,*np;
-	struct mobdb_data *id;
-	const char *filename = "db/mob_avail.txt";
+	int class_, j, k;
+	char* str[16], *p;
+	struct mobdb_data* id;
+	const char* filename = "db/mob_avail.txt";
 
-	if( (fp = fopen(filename, "r")) == NULL ) {
+	if ((fp = fopen(filename, "r")) == NULL) {
 		printf("mob_readdb_mobavail: open [%s] failed !\n", filename);
 		return -1;
 	}
 
-	while(fgets(line,1020,fp)){
-		if(line[0] == '\0' || line[0] == '\r' || line[0] == '\n')
+	while (fgets(line, 1020, fp)) {
+		if (line[0] == '\0' || line[0] == '\r' || line[0] == '\n')
 			continue;
-		if(line[0]=='/' && line[1]=='/')
+		if (line[0] == '/' && line[1] == '/')
 			continue;
-		memset(str,0,sizeof(str));
+		memset(str, 0, sizeof(str));
 
-		for(j=0,p=line;j<16;j++){
-			if((np=strchr(p,','))!=NULL){
-				str[j]=p;
-				*np=0;
-				p=np+1;
-			} else {
-				str[j]=p;
-			}
+		for (j = 0, p = line; j < 16 && p; j++) {
+			str[j] = p;
+			p = strchr(p, ',');
+			if (p) *p++ = 0;
 		}
-		if(str[0] == NULL)
+		if (str[0] == NULL)
 			continue;
 
 		class_ = atoi(str[0]);
 
-		if(!mobdb_exists(class_))	// 値が異常なら処理しない。
+		if (!mobdb_exists(class_))	// 値が異常なら処理しない。
 			continue;
 
 		id = mobdb_search(class_);
 
 		k = atoi(str[1]);
-		if(k >= 0) {
+		if (k >= 0) {
 			id->view_class = k;
-			if(k < PC_JOB_MAX)
+			if (k < PC_JOB_MAX)
 				id->pcview_flag = 1;
 			else
 				id->pcview_flag = 0;
 		}
-		id->view_size = atoi(str[2]);
-
-		if(id->pcview_flag) {
-			id->sex           = atoi(str[3]);
-			id->hair          = atoi(str[4]);
-			id->hair_color    = atoi(str[5]);
+		if (j > 2) {
+			if (strlen(str[2]) > 1)
+				id->effect = atoi(str[2]);
+			else
+				id->effect = -1;
+		}
+		if (j > 3 && id->pcview_flag) {
+			id->sex = atoi(str[3]);
+			id->hair = atoi(str[4]);
+			id->hair_color = atoi(str[5]);
 			id->clothes_color = atoi(str[6]);
-			id->weapon        = atoi(str[7]);
-			id->shield        = atoi(str[8]);
-			id->robe          = atoi(str[9]);
-			id->head_top      = atoi(str[10]);
-			id->head_mid      = atoi(str[11]);
-			id->head_bottom   = atoi(str[12]);
-			id->style         = atoi(str[13]);
-			id->option        = ((unsigned int)atoi(str[14])) & ~(OPTION_HIDE | OPTION_CLOAKING | OPTION_SPECIALHIDING);
+			id->weapon = atoi(str[7]);
+			id->shield = atoi(str[8]);
+			id->robe = atoi(str[9]);
+			id->head_top = atoi(str[10]);
+			id->head_mid = atoi(str[11]);
+			id->head_bottom = atoi(str[12]);
+			id->style = atoi(str[13]);
+			id->option = ((unsigned int)atoi(str[14])) & ~(OPTION_HIDE | OPTION_CLOAKING | OPTION_SPECIALHIDING);
 
 			id->view_class = pc_calc_class_job(id->view_class, atoi(str[15]));
 		}
@@ -4601,15 +4646,15 @@ static int mob_readdb_mobavail(void)
  * ランダムモンスターデータのソート
  *------------------------------------------
  */
-static int mob_sort_randommonster(const void *_e1, const void *_e2)
+static int mob_sort_randommonster(const void* _e1, const void* _e2)
 {
-	struct random_mob_data_entry *e1 = (struct random_mob_data_entry *)_e1;
-	struct random_mob_data_entry *e2 = (struct random_mob_data_entry *)_e2;
+	struct random_mob_data_entry* e1 = (struct random_mob_data_entry*)_e1;
+	struct random_mob_data_entry* e2 = (struct random_mob_data_entry*)_e2;
 
 	int lv1 = mobdb_search(e1->class_)->lv;
 	int lv2 = mobdb_search(e2->class_)->lv;
 
-	return (lv1 > lv2)? 1 : (lv1 < lv2)? -1 : 0;
+	return (lv1 > lv2) ? 1 : (lv1 < lv2) ? -1 : 0;
 }
 
 /*==========================================

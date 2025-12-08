@@ -55,7 +55,7 @@ CC = gcc -pipe
 # 2007-05-21aSakexe: 20070521
 # 2007-02-12aSakexe: 20070212
 # 2006-10-23aSakexe: 20061023
-PACKETDEF = -DPACKETVER=20151029 -DNEW_006b
+PACKETDEF = -DPACKETVER=20250319 -DNEW_006b
 
 PLATFORM = $(shell uname)
 
@@ -79,7 +79,7 @@ CCFLAGS = -pipe -D_XOPEN_SOURCE -D_DEFAULT_SOURCE -Wall -Wextra -I../common -I..
 LIBS = -lm
 
 #Link Zlib(NOTrecommended)
-#CFLAGS += -DLOCALZLIB
+CFLAGS += -DLOCALZLIB
 
 #debug(recommended)
 CFLAGS += -g

@@ -1,6 +1,6 @@
 # $Id: Makefile,v 1.1 2003/06/20 05:30:43 lemit Exp $
 
-CC = gcc -pipe
+CC ?= gcc
 
 # 2020-02-05aRagexeRE: 20200205
 # 2019-05-30aRagexeRE: 20190530
@@ -75,7 +75,7 @@ else
     MAKE = make
 endif
 
-CCFLAGS = -pipe -D_XOPEN_SOURCE -D_DEFAULT_SOURCE -Wall -Wextra -I../common -I../common/lua $(PACKETDEF) $(OS_TYPE)FLAGS = -D_XOPEN_SOURCE -D_DEFAULT_SOURCE -Wall -Wextra -I../common -I../common/lua $(PACKETDEF) $(OS_TYPE)
+CFLAGS = -pipe -D_XOPEN_SOURCE -D_DEFAULT_SOURCE -Wall -Wextra -I../common -I../common/lua $(PACKETDEF) $(OS_TYPE)
 LIBS = -lm
 
 #Link Zlib(NOTrecommended)
@@ -131,7 +131,7 @@ endif
 #CFLAGS += -DCMP_AUTHFIFO_LOGIN2
 
 # disable httpd
-CFLAGS += -DNO_HTTPD
+#CFLAGS += -DNO_HTTPD
 
 # disable httpd-external-CGI
 CFLAGS += -DNO_HTTPD_CGI
@@ -294,23 +294,23 @@ CFLAGS += -DDYNAMIC_SC_DATA
 MKDEF = CC="$(CC)" CFLAGS="$(CFLAGS)" LIBS="$(LIBS)"
 
 all clean: src/common/zlib/GNUmakefile src/common/GNUmakefile src/login/GNUmakefile src/char/GNUmakefile src/map/GNUmakefile src/converter/GNUmakefile
-    $(MAKE) -C src/common $(MKDEF) $@
-    $(MAKE) -C src/common/lua $(MKDEF) $@
-    $(MAKE) -C src/common/zlib $(MKDEF) $@
-    $(MAKE) -C src/login $(MKDEF) $@
-    $(MAKE) -C src/char $(MKDEF) $@
-    $(MAKE) -C src/converter $(MKDEF) $@
-    $(MAKE) -C src/map $(MKDEF) $@
+	$(MAKE) -C src/common $(MKDEF) $@
+	$(MAKE) -C src/common/lua $(MKDEF) $@
+	$(MAKE) -C src/common/zlib $(MKDEF) $@
+	$(MAKE) -C src/login $(MKDEF) $@
+	$(MAKE) -C src/char $(MKDEF) $@
+	$(MAKE) -C src/converter $(MKDEF) $@
+	$(MAKE) -C src/map $(MKDEF) $@
 
 ifdef SQLFLAG
 sql: src/common/zlib/GNUmakefile src/common/GNUmakefile src/login/GNUmakefile src/char/GNUmakefile src/map/GNUmakefile src/converter/GNUmakefile
-    $(MAKE) -C src/common $(MKDEF) SQLFLAG=1 $@
-    $(MAKE) -C src/common/lua $(MKDEF) SQLFLAG=1 $@
-    $(MAKE) -C src/common/zlib $(MKDEF) SQLFLAG=1 $@
-    $(MAKE) -C src/login $(MKDEF) SQLFLAG=1 $@
-    $(MAKE) -C src/char $(MKDEF) SQLFLAG=1 $@
-    $(MAKE) -C src/converter $(MKDEF) SQLFLAG=1 $@
-    $(MAKE) -C src/map $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/common $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/common/lua $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/common/zlib $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/login $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/char $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/converter $(MKDEF) SQLFLAG=1 $@
+	$(MAKE) -C src/map $(MKDEF) SQLFLAG=1 $@
 else
 sql:
 	$(MAKE) CC="$(CC)" SQLFLAG=1

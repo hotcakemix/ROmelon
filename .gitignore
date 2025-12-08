@@ -274,3 +274,8 @@ vcproj-14/map-server/Debug/map-server.log
 vcproj-14/map-server/Debug/map-server.tlog/CL.command.1.tlog
 vcproj-14/map-server/Debug/map-server.tlog/map-server.lastbuildstate
 vcproj-14/map-server/Debug/map-server.tlog/unsuccessfulbuild
+.github/workflows/integration-linux-build-clang.yml
+.vs/Auriga-14/copilot-chat/5b9dd5e2/sessions/0a11611a-e030-4e5b-978a-dbbfeeca3808
+.vs/Auriga-14/v17/ipch/AutoPCH/d0c450bc6e31630a/LOCK.ipch
+.vs/Auriga-14/v17/ipch/AutoPCH/dbac9e82609026f4/VCTMP25768_732358.ITEMDB.00000000.ipch
+.vs/Auriga-14/v17/ipch/AutoPCH/e052b606798b2054/MD5CALC.ipch

@@ -6,3 +6,5 @@ clean:
 	rm -f *.o
 	rm -f GNUmakefile
 
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<

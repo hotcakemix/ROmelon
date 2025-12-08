@@ -291,7 +291,7 @@ CFLAGS += -DDYNAMIC_SC_DATA
 
 #---------------------------------------------------
 
-MKDEF = CC="$(CC)" CFLAGS="$(CFLAGS)" LIBS="$(LIBS)" MAKEFLAGS="CFLAGS=$(CFLAGS) LIBS=$(LIBS)"
+$(MAKE) -C src/common CC="$(CC)" CFLAGS="$(CFLAGS)" LIBS="$(LIBS)" $@
 
 all clean: src/common/zlib/GNUmakefile src/common/GNUmakefile src/login/GNUmakefile src/char/GNUmakefile src/map/GNUmakefile src/converter/GNUmakefile
 	$(MAKE) -C src/common $(MKDEF) $@

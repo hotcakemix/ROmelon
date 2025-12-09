@@ -34,12 +34,12 @@
 #include "malloc.h"
 #include "utils.h"
 
+#include "itemdb.h"
 #include "map.h"
 #include "npc.h"
 #include "clif.h"
 #include "intif.h"
 #include "pc.h"
-#include "itemdb.h"
 #include "script.h"
 #include "mob.h"
 #include "pet.h"

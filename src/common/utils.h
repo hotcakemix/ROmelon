@@ -330,9 +330,7 @@ size_t auriga_strlcat(char *dst, const char *src, size_t siz);
 // ---------------------
 
 #ifndef WINDOWS
-#  ifndef max
-#    define max(a,b) (( (a) > (b) ) ? (a) : (b))
-#  endif
+#define max(a,b) ({int _a = (a), _b = (b); _a > _b ? _a : _b;})
 #endif
 
 #endif	// _UTILS_H_

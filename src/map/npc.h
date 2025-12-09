@@ -22,8 +22,7 @@
 #ifndef _NPC_H_
 #define _NPC_H_
 
-#include "map.h"
-#include "itemdb.h"
+struct add_barter_item;
 
 #define WARP_CLASS 45
 #define WARP_DEBUG_CLASS 722

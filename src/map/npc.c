@@ -34,8 +34,8 @@
 #include "malloc.h"
 #include "utils.h"
 
-#include "itemdb.h"
 #include "map.h"
+#include "itemdb.h"
 #include "npc.h"
 #include "clif.h"
 #include "intif.h"

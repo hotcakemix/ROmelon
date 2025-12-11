@@ -1228,6 +1228,7 @@ int parse_login(int fd)
 #endif
 			if( result == -1 )
 				result = mmo_auth(sd);
+			printf("login check: version=%d clienttype=%d result=%d\n", version, clienttype, result);
 			if( result == -1 )
 				login_authok(sd,fd);
 			else

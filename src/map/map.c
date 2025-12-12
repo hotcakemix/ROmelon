@@ -2215,7 +2215,7 @@ static void map_readwater(void)
  *------------------------------------------
  */
 // マップキャッシュの最大値
-#define MAX_MAP_CACHE 768
+#define MAX_MAP_CACHE 1000
 
 // 各マップごとの最小限情報を入れるもの、READ_FROM_BITMAP用
 struct map_cache_info {

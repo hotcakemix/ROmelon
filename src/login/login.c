@@ -1076,6 +1076,8 @@ int parse_login(int fd)
 		session[fd]->session_data = aCalloc(1,sizeof(struct login_session_data));
 	sd = (struct login_session_data *)session[fd]->session_data;
 
+	printf("parse_login: session #%d connected\n", fd);
+
 	while( RFIFOREST(fd) >= 2 )
 	{
 		int cmd = RFIFOW(fd,0);

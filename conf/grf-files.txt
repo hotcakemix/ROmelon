@@ -6,7 +6,7 @@
 //       grf: ./data.grf
 //   など
 
-grf: G:\auriga\map.grf
+//grf: G:\auriga\map.grf
 
 
 // datadir: <dataフォルダのディレクトリ>
